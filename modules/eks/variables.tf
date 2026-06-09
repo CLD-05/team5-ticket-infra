@@ -56,6 +56,6 @@ variable "bastion_role_arn" {
 }
 
 variable "team_member_user_arns" {
-  type        = list(string)
-  description = "팀원 IAM 사용자 ARN 리스트"
+  type        = map(string)
+  description = "팀원 IAM 사용자 ARN 맵"
 }
