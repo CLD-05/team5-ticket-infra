@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "terraform_state_dev" {
-  bucket = "team5-ticket-tfstate-dev"
+  bucket = "tfstate-lionkdt5-team5"
 
   lifecycle {
     prevent_destroy = true
@@ -18,7 +18,7 @@ resource "aws_s3_bucket_versioning" "terraform_state_dev" {
 }
 
 resource "aws_s3_bucket" "terraform_state_prod" {
-  bucket = "team5-ticket-tfstate-prod"
+  bucket = "tfstate-lionkdt5-team5-prod"
 
   lifecycle {
     prevent_destroy = true
