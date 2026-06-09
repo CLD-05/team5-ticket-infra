@@ -1,55 +1,27 @@
+variable "team" {
+  type        = string
+  default     = "team5"
+  description = "팀 식별자"
+}
+
 variable "environment" {
   type        = string
-  description = "Target environment (dev/prod)"
+  description = "배포 환경"
 }
 
-variable "region" {
+variable "kubernetes_version" {
   type        = string
-  default     = "ap-northeast-2"
-  description = "AWS region"
+  default     = "1.35"
+  description = "EKS Kubernetes 버전"
 }
 
-variable "vpc_id" {
-  type        = string
-  description = "The VPC ID where EKS is deployed"
-}
-
-variable "subnet_ids" {
-  type        = list(string)
-  description = "List of private subnet IDs for the EKS worker nodes"
-}
-
-variable "cluster_endpoint_public_access" {
+variable "endpoint_public_access" {
   type        = bool
-  description = "Whether to enable EKS Control Plane public endpoint access"
+  description = "EKS 퍼블릭 엔드포인트 활성화 여부 (dev=true, prod=false)"
 }
 
-variable "node_desired_size" {
-  type        = number
-  description = "Desired number of worker nodes"
-}
-
-variable "node_min_size" {
-  type        = number
-  description = "Minimum number of worker nodes"
-}
-
-variable "node_max_size" {
-  type        = number
-  description = "Maximum number of worker nodes"
-}
-
-variable "node_instance_types" {
-  type        = list(string)
-  description = "Instance types for the worker nodes"
-}
-
-variable "bastion_role_arn" {
-  type        = string
-  description = "The ARN of the Bastion Host IAM Role to assign access"
-}
-
-variable "team_member_user_arns" {
-  type        = map(string)
-  description = "Map of personal IAM User ARNs for direct cluster mappings"
+variable "endpoint_private_access" {
+  type        = bool
+  default     = true
+  description = "EKS 프라이빗 엔드포인트 활성화 여부"
 }
