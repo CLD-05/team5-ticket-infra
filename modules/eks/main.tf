@@ -38,13 +38,15 @@ module "eks" {
 
   eks_managed_node_groups = {
     general = {
-      ami_type       = "AL2_x86_64"
+      ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = var.node_instance_types
 
       desired_size = var.node_desired_size
       min_size     = var.node_min_size
       max_size     = var.node_max_size
 
+      iam_role_name             = "team5-${var.environment}-node-group"
+      iam_role_use_name_prefix  = false
       iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 
       block_device_mappings = {
@@ -69,7 +71,9 @@ module "eks" {
       }
 
       tags = {
-        Name = "team5-${var.environment}-node-group"
+        Name        = "team5-${var.environment}-node-group"
+        Team        = "team5"
+        Environment = var.environment
       }
     }
   }
