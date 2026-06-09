@@ -47,7 +47,7 @@ variable "enable_multi_nat" {
 # EKS Variables
 variable "cluster_name" {
   type    = string
-  default = "team5-dev-eks"
+  default = "team5-prod-eks"
 }
 
 variable "node_desired_size" {
@@ -73,38 +73,100 @@ variable "node_instance_types" {
 # RDS Variables
 variable "db_instance_class" {
   type    = string
-  default = "db.t4g.micro"
+  default = "db.m6i.large"
+}
+
+variable "db_name" {
+  type    = string
+  default = "ticketing"
+}
+
+variable "db_username" {
+  type    = string
+  default = "ticketadmin"
+}
+
+variable "db_engine_version" {
+  type    = string
+  default = "8.0"
+}
+
+variable "db_allocated_storage" {
+  type    = number
+  default = 100
+}
+
+variable "db_max_allocated_storage" {
+  type    = number
+  default = 500
 }
 
 variable "db_multi_az" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "db_deletion_protection" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "db_skip_final_snapshot" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "db_backup_retention" {
   type    = number
-  default = 1
+  default = 7
 }
 
 # Redis Variables
 variable "redis_node_type" {
   type    = string
-  default = "cache.t4g.micro"
+  default = "cache.m7g.large"
 }
 
 variable "redis_num_cache_clusters" {
   type    = number
-  default = 1
+  default = 2
+}
+
+variable "redis_port" {
+  type    = number
+  default = 6379
+}
+
+variable "redis_transit_encryption_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "redis_at_rest_encryption_enabled" {
+  type    = bool
+  default = true
+}
+
+# SQS Variables
+variable "sqs_message_retention_seconds" {
+  type    = number
+  default = 345600
+}
+
+variable "sqs_max_receive_count" {
+  type    = number
+  default = 5
+}
+
+# ECR Variables
+variable "ecr_image_tag_mutability" {
+  type    = string
+  default = "IMMUTABLE"
+}
+
+variable "ecr_max_tagged_image_count" {
+  type    = number
+  default = 50
 }
 
 # Access Control Variables

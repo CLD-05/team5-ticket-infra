@@ -5,8 +5,11 @@ resource "aws_kms_key" "rds" {
   enable_key_rotation     = true
 
   tags = {
-    Name = "team5-${var.environment}-rds-key"
-    Team = "team5"
+    Name        = "team5-${var.environment}-rds-key"
+    Team        = "team5"
+    Environment = var.environment
+    Project     = var.project_name
+    Owner       = "team5"
   }
 }
 
@@ -21,23 +24,32 @@ resource "aws_db_subnet_group" "main" {
   subnet_ids = var.subnet_ids
 
   tags = {
-    Name = "team5-${var.environment}-db-subnet-group"
-    Team = "team5"
+    Name        = "team5-${var.environment}-db-subnet-group"
+    Team        = "team5"
+    Environment = var.environment
+    Project     = var.project_name
+    Owner       = "team5"
   }
+}
+
+resource "random_password" "db" {
+  length           = 24
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
 # RDS MySQL Instance
 resource "aws_db_instance" "main" {
   identifier            = "team5-${var.environment}-rds"
-  allocated_storage     = 20
-  max_allocated_storage = 100
+  allocated_storage     = var.db_allocated_storage
+  max_allocated_storage = var.db_max_allocated_storage
   storage_type          = "gp3"
   engine                = "mysql"
-  engine_version        = "8.0"
+  engine_version        = var.db_engine_version
   instance_class        = var.db_instance_class
-  db_name               = "ticketing"
-  username              = "admin"
-  password              = "password123"
+  db_name               = var.db_name
+  username              = var.db_username
+  password              = random_password.db.result
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
@@ -54,8 +66,11 @@ resource "aws_db_instance" "main" {
   enabled_cloudwatch_logs_exports = ["error", "slowquery"]
 
   tags = {
-    Name = "team5-${var.environment}-rds"
-    Team = "team5"
+    Name        = "team5-${var.environment}-rds"
+    Team        = "team5"
+    Environment = var.environment
+    Project     = var.project_name
+    Owner       = "team5"
   }
 }
 
@@ -83,7 +98,10 @@ resource "aws_security_group" "rds" {
   }
 
   tags = {
-    Name = "team5-${var.environment}-rds-sg"
-    Team = "team5"
+    Name        = "team5-${var.environment}-rds-sg"
+    Team        = "team5"
+    Environment = var.environment
+    Project     = var.project_name
+    Owner       = "team5"
   }
 }

@@ -4,8 +4,11 @@ resource "aws_elasticache_subnet_group" "main" {
   subnet_ids = var.subnet_ids
 
   tags = {
-    Name = "team5-${var.environment}-redis-subnet-group"
-    Team = "team5"
+    Name        = "team5-${var.environment}-redis-subnet-group"
+    Team        = "team5"
+    Environment = var.environment
+    Project     = var.project_name
+    Owner       = "team5"
   }
 }
 
@@ -16,18 +19,23 @@ resource "aws_elasticache_replication_group" "main" {
   node_type                  = var.redis_node_type
   num_cache_clusters         = var.redis_num_cache_clusters
   automatic_failover_enabled = var.redis_num_cache_clusters > 1 ? true : false
+  multi_az_enabled           = var.redis_num_cache_clusters > 1 ? true : false
   engine                     = "redis"
   engine_version             = "7.0"
+  port                       = var.redis_port
 
   subnet_group_name  = aws_elasticache_subnet_group.main.name
   security_group_ids = [aws_security_group.redis.id]
 
-  transit_encryption_enabled = false
-  at_rest_encryption_enabled = true
+  transit_encryption_enabled = var.redis_transit_encryption_enabled
+  at_rest_encryption_enabled = var.redis_at_rest_encryption_enabled
 
   tags = {
-    Name = "team5-${var.environment}-redis"
-    Team = "team5"
+    Name        = "team5-${var.environment}-redis"
+    Team        = "team5"
+    Environment = var.environment
+    Project     = var.project_name
+    Owner       = "team5"
   }
 }
 
@@ -55,7 +63,10 @@ resource "aws_security_group" "redis" {
   }
 
   tags = {
-    Name = "team5-${var.environment}-redis-sg"
-    Team = "team5"
+    Name        = "team5-${var.environment}-redis-sg"
+    Team        = "team5"
+    Environment = var.environment
+    Project     = var.project_name
+    Owner       = "team5"
   }
 }
