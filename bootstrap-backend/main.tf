@@ -2,7 +2,7 @@ provider "aws" {
   region = "ap-northeast-2"
 }
 
-resource "aws_s3_bucket" "terraform_state_dev" {
+resource "aws_s3_bucket" "terraform_state" {
   bucket = "tfstate-lionkdt5-team5"
 
   lifecycle {
@@ -17,30 +17,8 @@ resource "aws_s3_bucket" "terraform_state_dev" {
   }
 }
 
-resource "aws_s3_bucket_versioning" "terraform_state_dev" {
-  bucket = aws_s3_bucket.terraform_state_dev.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket" "terraform_state_prod" {
-  bucket = "tfstate-lionkdt5-team5-prod"
-
-  lifecycle {
-    prevent_destroy = true
-  }
-
-  tags = {
-    Team       = "team5"
-    Project    = "final"
-    purpose    = "tfstate"
-    managed-by = "opsmanager"
-  }
-}
-
-resource "aws_s3_bucket_versioning" "terraform_state_prod" {
-  bucket = aws_s3_bucket.terraform_state_prod.id
+resource "aws_s3_bucket_versioning" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
   versioning_configuration {
     status = "Enabled"
   }

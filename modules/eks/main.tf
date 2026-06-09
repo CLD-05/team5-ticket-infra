@@ -5,6 +5,8 @@ module "eks" {
   cluster_name    = "team5-${var.environment}-eks"
   cluster_version = "1.35"
 
+  iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 
@@ -28,11 +30,12 @@ module "eks" {
 
   eks_managed_node_groups = {
     general = {
-      desired_size   = var.node_desired_size
-      min_size       = var.node_min_size
-      max_size       = var.node_max_size
-      instance_types = var.node_instance_types
-      capacity_type  = "ON_DEMAND"
+      desired_size                  = var.node_desired_size
+      min_size                      = var.node_min_size
+      max_size                      = var.node_max_size
+      instance_types                = var.node_instance_types
+      capacity_type                 = "ON_DEMAND"
+      iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 
       labels = {
         role = "general"
