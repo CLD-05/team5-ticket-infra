@@ -30,8 +30,9 @@ data "aws_iam_policy_document" "gha_oidc_assume" {
 }
 
 resource "aws_iam_role" "gha" {
-  name               = "team5-gha-${var.environment}-role"
-  assume_role_policy = data.aws_iam_policy_document.gha_oidc_assume.json
+  name                 = "team5-gha-${var.environment}-role"
+  permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+  assume_role_policy   = data.aws_iam_policy_document.gha_oidc_assume.json
 
   tags = {
     Name = "team5-gha-${var.environment}-role"

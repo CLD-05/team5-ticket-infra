@@ -17,8 +17,9 @@ data "aws_iam_policy_document" "eks_pod_identity_assume" {
 
 # 1. AWS Load Balancer Controller (LBC) IAM
 resource "aws_iam_role" "lbc" {
-  name               = "team5-${var.environment}-lbc-role"
-  assume_role_policy = data.aws_iam_policy_document.eks_pod_identity_assume.json
+  name                 = "team5-${var.environment}-lbc-role"
+  permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+  assume_role_policy   = data.aws_iam_policy_document.eks_pod_identity_assume.json
 
   tags = {
     Name = "team5-${var.environment}-lbc-role"
@@ -170,8 +171,9 @@ resource "aws_iam_role_policy_attachment" "lbc" {
 
 # 2. External Secrets Operator (ESO) IAM
 resource "aws_iam_role" "eso" {
-  name               = "team5-${var.environment}-eso-role"
-  assume_role_policy = data.aws_iam_policy_document.eks_pod_identity_assume.json
+  name                 = "team5-${var.environment}-eso-role"
+  permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+  assume_role_policy   = data.aws_iam_policy_document.eks_pod_identity_assume.json
 
   tags = {
     Name = "team5-${var.environment}-eso-role"
@@ -214,8 +216,9 @@ resource "aws_iam_role_policy_attachment" "eso" {
 
 # 3. ExternalDNS IAM
 resource "aws_iam_role" "external_dns" {
-  name               = "team5-${var.environment}-external-dns-role"
-  assume_role_policy = data.aws_iam_policy_document.eks_pod_identity_assume.json
+  name                 = "team5-${var.environment}-external-dns-role"
+  permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+  assume_role_policy   = data.aws_iam_policy_document.eks_pod_identity_assume.json
 
   tags = {
     Name = "team5-${var.environment}-external-dns-role"
