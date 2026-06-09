@@ -8,6 +8,13 @@ resource "aws_s3_bucket" "terraform_state_dev" {
   lifecycle {
     prevent_destroy = true
   }
+
+  tags = {
+    Team       = "team5"
+    Project    = "final"
+    purpose    = "tfstate"
+    managed-by = "opsmanager"
+  }
 }
 
 resource "aws_s3_bucket_versioning" "terraform_state_dev" {
@@ -22,6 +29,13 @@ resource "aws_s3_bucket" "terraform_state_prod" {
 
   lifecycle {
     prevent_destroy = true
+  }
+
+  tags = {
+    Team       = "team5"
+    Project    = "final"
+    purpose    = "tfstate"
+    managed-by = "opsmanager"
   }
 }
 
