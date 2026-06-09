@@ -1,55 +1,61 @@
+variable "team" {
+  type        = string
+  default     = "team5"
+  description = "팀 식별자"
+}
+
 variable "environment" {
   type        = string
-  description = "Target environment (dev/prod)"
+  description = "배포 환경"
 }
 
 variable "region" {
   type        = string
   default     = "ap-northeast-2"
-  description = "AWS region"
+  description = "AWS 리전"
 }
 
 variable "vpc_id" {
   type        = string
-  description = "The VPC ID where EKS is deployed"
+  description = "VPC ID"
 }
 
 variable "subnet_ids" {
   type        = list(string)
-  description = "List of private subnet IDs for the EKS worker nodes"
+  description = "프라이빗 서브넷 ID 리스트"
 }
 
 variable "cluster_endpoint_public_access" {
   type        = bool
-  description = "Whether to enable EKS Control Plane public endpoint access"
+  description = "EKS 퍼블릭 엔드포인트 활성화 여부 (dev=true, prod=false)"
 }
 
 variable "node_desired_size" {
   type        = number
-  description = "Desired number of worker nodes"
+  description = "Managed Node Group 원하는 노드 수"
 }
 
 variable "node_min_size" {
   type        = number
-  description = "Minimum number of worker nodes"
+  description = "Managed Node Group 최소 노드 수"
 }
 
 variable "node_max_size" {
   type        = number
-  description = "Maximum number of worker nodes"
+  description = "Managed Node Group 최대 노드 수"
 }
 
 variable "node_instance_types" {
   type        = list(string)
-  description = "Instance types for the worker nodes"
+  description = "Managed Node Group 인스턴스 타입 리스트"
 }
 
 variable "bastion_role_arn" {
   type        = string
-  description = "The ARN of the Bastion Host IAM Role to assign access"
+  description = "배스천 호스트 IAM 역할 ARN"
 }
 
 variable "team_member_user_arns" {
-  type        = map(string)
-  description = "Map of personal IAM User ARNs for direct cluster mappings"
+  type        = list(string)
+  description = "팀원 IAM 사용자 ARN 리스트"
 }
