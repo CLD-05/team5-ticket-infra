@@ -25,3 +25,8 @@ output "eso_iam_role_arn" {
 output "external_dns_iam_role_arn" {
   value = aws_iam_role.external_dns.arn
 }
+
+output "node_security_group_id" {
+  value       = module.eks.node_security_group_id
+  description = "The security group ID of the EKS managed node group"
+}
