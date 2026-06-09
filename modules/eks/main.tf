@@ -13,10 +13,10 @@ module "eks" {
   iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 
   vpc_id     = var.vpc_id
-  subnet_ids = var.private_subnet_ids
+  subnet_ids = var.subnet_ids
 
-  cluster_endpoint_public_access  = var.endpoint_public_access
-  cluster_endpoint_private_access = var.endpoint_private_access
+  cluster_endpoint_public_access  = var.cluster_endpoint_public_access
+  cluster_endpoint_private_access = true
 
   authentication_mode = "API_AND_CONFIG_MAP"
 

@@ -1,59 +1,61 @@
-variable "region" {
-  type    = string
-  default = "ap-northeast-2"
-}
-
 variable "team" {
-  type    = string
-  default = "team5"
+  type        = string
+  default     = "team5"
+  description = "팀 식별자"
 }
 
 variable "environment" {
-  type = string
+  type        = string
+  description = "배포 환경"
 }
 
-variable "kubernetes_version" {
-  type    = string
-  default = "1.35"
-}
-
-variable "endpoint_public_access" {
-  type = bool
-}
-
-variable "endpoint_private_access" {
-  type    = bool
-  default = true
+variable "region" {
+  type        = string
+  default     = "ap-northeast-2"
+  description = "AWS 리전"
 }
 
 variable "vpc_id" {
-  type = string
+  type        = string
+  description = "VPC ID"
 }
 
-variable "private_subnet_ids" {
-  type = list(string)
+variable "subnet_ids" {
+  type        = list(string)
+  description = "프라이빗 서브넷 ID 리스트"
 }
 
-variable "node_security_group_id" {
-  type = string
+variable "cluster_endpoint_public_access" {
+  type        = bool
+  description = "EKS 퍼블릭 엔드포인트 활성화 여부 (dev=true, prod=false)"
 }
 
 variable "node_desired_size" {
-  type    = number
-  default = var.environment == "prod" ? 3 : 2
+  type        = number
+  description = "Managed Node Group 원하는 노드 수"
 }
 
 variable "node_min_size" {
-  type    = number
-  default = var.environment == "prod" ? 2 : 1
+  type        = number
+  description = "Managed Node Group 최소 노드 수"
 }
 
 variable "node_max_size" {
-  type    = number
-  default = var.environment == "prod" ? 10 : 5
+  type        = number
+  description = "Managed Node Group 최대 노드 수"
 }
 
 variable "node_instance_types" {
-  type    = list(string)
-  default = var.environment == "prod" ? ["m6i.large", "c6i.large"] : ["t3.medium"]
+  type        = list(string)
+  description = "Managed Node Group 인스턴스 타입 리스트"
+}
+
+variable "bastion_role_arn" {
+  type        = string
+  description = "배스천 호스트 IAM 역할 ARN"
+}
+
+variable "team_member_user_arns" {
+  type        = list(string)
+  description = "팀원 IAM 사용자 ARN 리스트"
 }
