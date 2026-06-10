@@ -21,7 +21,7 @@ variable "vpc_cidr" {
 
 variable "azs" {
   type    = list(string)
-  default = ["ap-northeast-2a", "ap-northeast-2c"]
+  default = ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
 }
 
 variable "public_subnet_cidrs" {
@@ -41,7 +41,7 @@ variable "database_subnet_cidrs" {
 
 variable "enable_multi_nat" {
   type    = bool
-  default = false
+  default = true
 }
 
 # EKS Variables
@@ -67,7 +67,7 @@ variable "node_max_size" {
 
 variable "node_instance_types" {
   type    = list(string)
-  default = ["t3.large", "t3a.large"]
+  default = ["t3.large"]
 }
 
 # RDS Variables
