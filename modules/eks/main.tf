@@ -34,6 +34,10 @@ module "eks" {
     eks-pod-identity-agent = {
       resolve_conflicts = "OVERWRITE"
     }
+    aws-ebs-csi-driver = {
+      resolve_conflicts        = "OVERWRITE"
+      service_account_role_arn = module.ebs_csi_irsa.iam_role_arn
+    }
   }
 
   eks_managed_node_groups = {
@@ -45,8 +49,8 @@ module "eks" {
       min_size     = var.node_min_size
       max_size     = var.node_max_size
 
-      iam_role_name             = "team5-${var.environment}-node-group"
-      iam_role_use_name_prefix  = false
+      iam_role_name                 = "team5-${var.environment}-node-group"
+      iam_role_use_name_prefix      = false
       iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 
       block_device_mappings = {
@@ -85,4 +89,19 @@ module "eks" {
   depends_on = [
     aws_cloudwatch_log_group.eks_cluster
   ]
+}
+
+module "ebs_csi_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.0"
+
+  role_name             = "team5-${var.environment}-ebs-csi"
+  attach_ebs_csi_policy = true
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+    }
+  }
 }

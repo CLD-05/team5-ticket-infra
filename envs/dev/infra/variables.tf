@@ -171,13 +171,16 @@ variable "ecr_max_tagged_image_count" {
 
 # Access Control Variables
 variable "team_member_user_arns" {
-  type = map(string)
+  type = map(object({
+    arn  = string
+    role = string
+  }))
   default = {
-    "jehoon"  = "arn:aws:iam::123456789012:user/team5-jehoon"
-    "sihyun"  = "arn:aws:iam::123456789012:user/team5-sihyun"
-    "jihyun"  = "arn:aws:iam::123456789012:user/team5-jihyun"
-    "sungmin" = "arn:aws:iam::123456789012:user/team5-sungmin"
-    "hyeonsu" = "arn:aws:iam::123456789012:user/team5-hyeonsu"
+    "jehoon"  = { arn = "arn:aws:iam::194722398200:user/team5-ljh", role = "admin" }
+    "sihyun"  = { arn = "arn:aws:iam::194722398200:user/team5-ksh", role = "developer" }
+    "jihyeon" = { arn = "arn:aws:iam::194722398200:user/team5-kjh", role = "developer" }
+    "sungmin" = { arn = "arn:aws:iam::194722398200:user/team5-bsm", role = "developer" }
+    "hyeonsu" = { arn = "arn:aws:iam::194722398200:user/team5-khs", role = "developer" }
   }
 }
 
