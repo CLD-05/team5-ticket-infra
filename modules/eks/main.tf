@@ -95,8 +95,10 @@ module "ebs_csi_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.0"
 
-  role_name             = "team5-${var.environment}-ebs-csi"
-  attach_ebs_csi_policy = true
+  role_name                     = "team5-${var.environment}-ebs-csi"
+  role_permissions_boundary_arn = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+  policy_name_prefix            = "team5-"
+  attach_ebs_csi_policy         = true
 
   oidc_providers = {
     main = {

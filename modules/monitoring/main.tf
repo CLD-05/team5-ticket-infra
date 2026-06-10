@@ -45,9 +45,10 @@ data "aws_iam_policy_document" "keda_assume" {
 }
 
 resource "aws_iam_role" "keda" {
-  name               = local.keda_role_name
-  assume_role_policy = data.aws_iam_policy_document.keda_assume.json
-  tags               = var.tags
+  name                 = local.keda_role_name
+  assume_role_policy   = data.aws_iam_policy_document.keda_assume.json
+  permissions_boundary = var.role_permissions_boundary_arn
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "keda_sqs_read" {
@@ -96,9 +97,10 @@ data "aws_iam_policy_document" "yace_assume" {
 }
 
 resource "aws_iam_role" "yace" {
-  name               = local.yace_role_name
-  assume_role_policy = data.aws_iam_policy_document.yace_assume.json
-  tags               = var.tags
+  name                 = local.yace_role_name
+  assume_role_policy   = data.aws_iam_policy_document.yace_assume.json
+  permissions_boundary = var.role_permissions_boundary_arn
+  tags                 = var.tags
 }
 
 # YACE는 CloudWatch 메트릭 조회 + 리소스 태그로 대상(SQS 큐) 자동 발견.
