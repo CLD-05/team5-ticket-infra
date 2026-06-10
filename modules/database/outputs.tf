@@ -29,3 +29,8 @@ output "db_security_group_id" {
   value       = aws_security_group.rds.id
   description = "The RDS security group ID"
 }
+
+output "db_proxy_endpoint" {
+  value       = "${aws_db_proxy.main.endpoint}:3306"
+  description = "The database proxy connection endpoint"
+}

@@ -256,15 +256,15 @@ resource "aws_iam_role_policy_attachment" "external_dns" {
 
 # AWS Load Balancer Controller (LBC) 연결
 resource "aws_eks_pod_identity_association" "alb_controller" {
-  cluster_name    = module.eks.cluster.name
-  namespace       = "kube-system"
+  cluster_name    = module.eks.cluster_name
+  namespace       = "ingress-system"
   service_account = "aws-load-balancer-controller"
   role_arn        = aws_iam_role.lbc.arn
 }
 
 # External Secrets Operator (ESO) 연결
 resource "aws_eks_pod_identity_association" "external_secrets" {
-  cluster_name    = module.eks.cluster.name
+  cluster_name    = module.eks.cluster_name
   namespace       = "external-secrets"
   service_account = "external-secrets"
   role_arn        = aws_iam_role.eso.arn
@@ -272,8 +272,8 @@ resource "aws_eks_pod_identity_association" "external_secrets" {
 
 # ExternalDNS 연결
 resource "aws_eks_pod_identity_association" "external_dns" {
-  cluster_name    = module.eks.cluster.name
-  namespace       = "kube-system"
+  cluster_name    = module.eks.cluster_name
+  namespace       = "external-dns"
   service_account = "external-dns"
   role_arn        = aws_iam_role.external_dns.arn
 }
