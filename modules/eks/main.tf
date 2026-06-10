@@ -41,7 +41,10 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    general = {
+    app = {
+      name            = "team5-${var.environment}-eks-app-ng"
+      use_name_prefix = false
+
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = var.node_instance_types
 
