@@ -31,6 +31,11 @@ variable "kubernetes_version" {
   description = "EKS 쿠버네티스 버전"
 }
 
+variable "cluster_endpoint_public_access" {
+  type        = bool
+  description = "EKS 퍼블릭 엔드포인트 활성화 여부"
+}
+
 variable "private_subnet_ids" {
   type        = list(string)
   description = "프라이빗 서브넷 ID 리스트"
@@ -39,11 +44,6 @@ variable "private_subnet_ids" {
 variable "subnet_ids" {
   type        = list(string)
   description = "기존 서브넷 ID 연동용"
-}
-
-variable "cluster_endpoint_public_access" {
-  type        = bool
-  description = "EKS 퍼블릭 엔드포인트 활성화 여부"
 }
 
 variable "desired_size" {
@@ -86,24 +86,9 @@ variable "node_instance_types" {
   description = "Managed Node Group 인스턴스 타입 리스트"
 }
 
-variable "bastion_iam_role_arn" {
-  type        = string
-  description = "배스천 호스트 IAM 역할 ARN"
-}
-
 variable "bastion_role_arn" {
   type        = string
-  description = "배스천 호스트 IAM 역할 ARN (기존)"
-}
-
-variable "iam_users_with_access" {
-  type        = map(string)
-  description = "팀원 IAM 사용자 ARN 맵"
-}
-
-variable "team_member_user_arns" {
-  type        = map(string)
-  description = "팀원 IAM 사용자 ARN 맵 (기존)"
+  description = "배스천 호스트 IAM 역할 ARN"
 }
 
 variable "node_security_group_ids" {
@@ -119,4 +104,13 @@ variable "rds_security_group_id" {
 variable "redis_security_group_id" {
   type        = string
   description = "캐시(Redis) 보안 그룹 ID"
+}
+
+variable "team_member_user_arns" {
+  type = map(object({
+    arn  = string
+    role = string
+  }))
+  description = "팀원 IAM User ARN 및 역할"
+  default     = {}
 }
