@@ -5,10 +5,11 @@
 module "monitoring" {
   source = "../../../modules/monitoring"
 
-  name_prefix       = "${var.project_name}-${var.environment}" # 예: team5-ticket-dev
-  oidc_provider_arn = module.eks.oidc_provider_arn
-  oidc_provider_url = module.eks.oidc_provider_url # https:// 포함돼도 모듈에서 제거
-  booking_queue_arn = module.sqs.queue_arn         # sqs 모듈 output 이름
+  name_prefix                   = "${var.project_name}-${var.environment}" # 예: team5-ticket-dev
+  oidc_provider_arn             = module.eks.oidc_provider_arn
+  oidc_provider_url             = module.eks.oidc_provider_url # https:// 포함돼도 모듈에서 제거
+  booking_queue_arn             = module.sqs.queue_arn         # sqs 모듈 output 이름
+  role_permissions_boundary_arn = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 
   keda_namespace       = "keda"
   keda_service_account = "keda-operator"

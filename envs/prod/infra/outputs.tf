@@ -3,6 +3,11 @@ output "rds_endpoint" {
   description = "Prod RDS endpoint"
 }
 
+output "rds_proxy_endpoint" {
+  value       = module.database.db_proxy_endpoint
+  description = "Prod RDS Proxy connection endpoint"
+}
+
 output "redis_endpoint" {
   value       = module.elasticache.redis_endpoint
   description = "Prod Redis endpoint"

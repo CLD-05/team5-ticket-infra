@@ -191,26 +191,6 @@ resource "helm_release" "external_dns" {
 }
 
 # =====================================
-# AWS EBS CSI Driver
-# =====================================
-
-resource "helm_release" "aws_ebs_csi_driver" {
-  name      = "aws-ebs-csi-driver"
-  namespace = "kube-system"
-
-  repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
-  chart      = "aws-ebs-csi-driver"
-
-  values = [
-    yamlencode({
-      controller = {
-        replicaCount = 2
-      }
-    })
-  ]
-}
-
-# =====================================
 # StorageClass
 # =====================================
 
@@ -231,8 +211,4 @@ resource "kubernetes_storage_class" "gp3" {
     type      = "gp3"
     encrypted = "true"
   }
-
-  depends_on = [
-    helm_release.aws_ebs_csi_driver
-  ]
 }

@@ -46,3 +46,10 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "role_permissions_boundary_arn" {
+  type        = string
+  description = "IAM role permissions boundary ARN"
+  default     = null
+}
+
