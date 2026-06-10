@@ -1,10 +1,10 @@
 # ElastiCache Redis Subnet Group
 resource "aws_elasticache_subnet_group" "main" {
-  name       = "team5-${var.environment}-redis-subnet-group"
+  name       = "team5-${var.environment}-redis-subnets"
   subnet_ids = var.subnet_ids
 
   tags = {
-    Name        = "team5-${var.environment}-redis-subnet-group"
+    Name        = "team5-${var.environment}-redis-subnets"
     Team        = "team5"
     Environment = var.environment
     Project     = var.project_name

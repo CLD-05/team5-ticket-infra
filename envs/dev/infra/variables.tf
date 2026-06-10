@@ -175,13 +175,7 @@ variable "team_member_user_arns" {
     arn  = string
     role = string
   }))
-  default = {
-    "jehoon"  = { arn = "arn:aws:iam::194722398200:user/team5-ljh", role = "admin" }
-    "sihyun"  = { arn = "arn:aws:iam::194722398200:user/team5-ksh", role = "developer" }
-    "jihyeon" = { arn = "arn:aws:iam::194722398200:user/team5-kjh", role = "developer" }
-    "sungmin" = { arn = "arn:aws:iam::194722398200:user/team5-bsm", role = "developer" }
-    "hyeonsu" = { arn = "arn:aws:iam::194722398200:user/team5-khs", role = "developer" }
-  }
+  default = {}
 }
 
 variable "allowed_ssh_cidrs" {
