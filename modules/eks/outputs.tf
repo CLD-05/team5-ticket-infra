@@ -57,3 +57,8 @@ output "node_security_group_id" {
   value       = module.eks.node_security_group_id
   description = "EKS Managed Node Group 보안 그룹 ID"
 }
+
+output "cluster_autoscaler_iam_role_arn" {
+  value       = module.cluster_autoscaler_irsa.iam_role_arn
+  description = "Cluster Autoscaler용 IAM 역할 ARN"
+}
