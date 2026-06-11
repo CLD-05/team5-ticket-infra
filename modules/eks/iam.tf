@@ -257,7 +257,7 @@ resource "aws_iam_role_policy_attachment" "external_dns" {
 # AWS Load Balancer Controller (LBC) 연결
 resource "aws_eks_pod_identity_association" "alb_controller" {
   cluster_name    = module.eks.cluster_name
-  namespace       = "ingress-system"
+  namespace       = "kube-system"
   service_account = "aws-load-balancer-controller"
   role_arn        = aws_iam_role.lbc.arn
 }
