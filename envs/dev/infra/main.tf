@@ -4,7 +4,7 @@ provider "aws" {
     tags = {
       Team        = "team5"
       Environment = var.environment
-      Project     = "ticket-platform"
+      Project     = var.project_name
       Owner       = "team5"
     }
   }

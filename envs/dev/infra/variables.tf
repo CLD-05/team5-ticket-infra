@@ -26,17 +26,17 @@ variable "azs" {
 
 variable "public_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.0.0/24", "10.5.1.0/24", "10.5.2.0/24"]
+  default = ["10.5.0.0/24", "10.5.1.0/24"]
 }
 
 variable "private_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.16.0/20", "10.5.32.0/20", "10.5.48.0/20"]
+  default = ["10.5.16.0/20", "10.5.32.0/20"]
 }
 
 variable "database_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.240.0/24", "10.5.241.0/24", "10.5.242.0/24"]
+  default = ["10.5.240.0/24", "10.5.241.0/24"]
 }
 
 variable "enable_multi_nat" {
@@ -76,6 +76,31 @@ variable "db_instance_class" {
   default = "db.t4g.micro"
 }
 
+variable "db_name" {
+  type    = string
+  default = "ticketing"
+}
+
+variable "db_username" {
+  type    = string
+  default = "ticketadmin"
+}
+
+variable "db_engine_version" {
+  type    = string
+  default = "8.0"
+}
+
+variable "db_allocated_storage" {
+  type    = number
+  default = 20
+}
+
+variable "db_max_allocated_storage" {
+  type    = number
+  default = 100
+}
+
 variable "db_multi_az" {
   type    = bool
   default = false
@@ -107,16 +132,50 @@ variable "redis_num_cache_clusters" {
   default = 1
 }
 
+variable "redis_port" {
+  type    = number
+  default = 6379
+}
+
+variable "redis_transit_encryption_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "redis_at_rest_encryption_enabled" {
+  type    = bool
+  default = true
+}
+
+# SQS Variables
+variable "sqs_message_retention_seconds" {
+  type    = number
+  default = 345600
+}
+
+variable "sqs_max_receive_count" {
+  type    = number
+  default = 5
+}
+
+# ECR Variables
+variable "ecr_image_tag_mutability" {
+  type    = string
+  default = "MUTABLE"
+}
+
+variable "ecr_max_tagged_image_count" {
+  type    = number
+  default = 30
+}
+
 # Access Control Variables
 variable "team_member_user_arns" {
-  type = map(string)
-  default = {
-    "jehoon"  = "arn:aws:iam::123456789012:user/team5-jehoon"
-    "sihyun"  = "arn:aws:iam::123456789012:user/team5-sihyun"
-    "jihyun"  = "arn:aws:iam::123456789012:user/team5-jihyun"
-    "sungmin" = "arn:aws:iam::123456789012:user/team5-sungmin"
-    "hyeonsu" = "arn:aws:iam::123456789012:user/team5-hyeonsu"
-  }
+  type = map(object({
+    arn  = string
+    role = string
+  }))
+  default = {}
 }
 
 variable "allowed_ssh_cidrs" {

@@ -3,6 +3,11 @@ variable "environment" {
   description = "Target environment (dev/prod)"
 }
 
+variable "project_name" {
+  type        = string
+  description = "Project name used for standard tags"
+}
+
 variable "vpc_id" {
   type        = string
   description = "The VPC ID"
@@ -16,6 +21,34 @@ variable "subnet_ids" {
 variable "db_instance_class" {
   type        = string
   description = "Instance class for RDS"
+}
+
+variable "db_name" {
+  type        = string
+  description = "Initial database name"
+}
+
+variable "db_username" {
+  type        = string
+  description = "Master database username"
+}
+
+variable "db_engine_version" {
+  type        = string
+  description = "MySQL engine version"
+  default     = "8.0"
+}
+
+variable "db_allocated_storage" {
+  type        = number
+  description = "Initial allocated storage in GB"
+  default     = 20
+}
+
+variable "db_max_allocated_storage" {
+  type        = number
+  description = "Maximum autoscaled storage in GB"
+  default     = 100
 }
 
 variable "db_multi_az" {

@@ -10,7 +10,7 @@ variable "project_name" {
 
 variable "environment" {
   type    = string
-  default = "dev"
+  default = "prod"
 }
 
 # Network Variables
@@ -21,7 +21,7 @@ variable "vpc_cidr" {
 
 variable "azs" {
   type    = list(string)
-  default = ["ap-northeast-2a", "ap-northeast-2c"]
+  default = ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
 }
 
 variable "public_subnet_cidrs" {
@@ -41,82 +41,141 @@ variable "database_subnet_cidrs" {
 
 variable "enable_multi_nat" {
   type    = bool
-  default = false
+  default = true
 }
 
 # EKS Variables
 variable "cluster_name" {
   type    = string
-  default = "team5-dev-eks"
+  default = "team5-prod-eks"
 }
 
 variable "node_desired_size" {
   type    = number
-  default = 2
+  default = 3
 }
 
 variable "node_min_size" {
   type    = number
-  default = 1
+  default = 2
 }
 
 variable "node_max_size" {
   type    = number
-  default = 5
+  default = 10
 }
 
 variable "node_instance_types" {
   type    = list(string)
-  default = ["t3.medium"]
+  default = ["t3.large"]
 }
 
 # RDS Variables
 variable "db_instance_class" {
   type    = string
-  default = "db.t4g.micro"
+  default = "db.m6i.large"
+}
+
+variable "db_name" {
+  type    = string
+  default = "ticketing"
+}
+
+variable "db_username" {
+  type    = string
+  default = "ticketadmin"
+}
+
+variable "db_engine_version" {
+  type    = string
+  default = "8.0"
+}
+
+variable "db_allocated_storage" {
+  type    = number
+  default = 100
+}
+
+variable "db_max_allocated_storage" {
+  type    = number
+  default = 500
 }
 
 variable "db_multi_az" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "db_deletion_protection" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "db_skip_final_snapshot" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "db_backup_retention" {
   type    = number
-  default = 1
+  default = 7
 }
 
 # Redis Variables
 variable "redis_node_type" {
   type    = string
-  default = "cache.t4g.micro"
+  default = "cache.m7g.large"
 }
 
 variable "redis_num_cache_clusters" {
   type    = number
-  default = 1
+  default = 2
+}
+
+variable "redis_port" {
+  type    = number
+  default = 6379
+}
+
+variable "redis_transit_encryption_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "redis_at_rest_encryption_enabled" {
+  type    = bool
+  default = true
+}
+
+# SQS Variables
+variable "sqs_message_retention_seconds" {
+  type    = number
+  default = 345600
+}
+
+variable "sqs_max_receive_count" {
+  type    = number
+  default = 5
+}
+
+# ECR Variables
+variable "ecr_image_tag_mutability" {
+  type    = string
+  default = "IMMUTABLE"
+}
+
+variable "ecr_max_tagged_image_count" {
+  type    = number
+  default = 50
 }
 
 # Access Control Variables
 variable "team_member_user_arns" {
-  type = map(string)
-  default = {
-    "jehoon"  = "arn:aws:iam::123456789012:user/team5-jehoon"
-    "sihyun"  = "arn:aws:iam::123456789012:user/team5-sihyun"
-    "jihyun"  = "arn:aws:iam::123456789012:user/team5-jihyun"
-    "sungmin" = "arn:aws:iam::123456789012:user/team5-sungmin"
-    "hyeonsu" = "arn:aws:iam::123456789012:user/team5-hyeonsu"
-  }
+  type = map(object({
+    arn  = string
+    role = string
+  }))
+  default = {}
 }
 
 variable "allowed_ssh_cidrs" {

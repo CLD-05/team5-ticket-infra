@@ -1,0 +1,42 @@
+region       = "ap-northeast-2"
+project_name = "team5-ticket"
+environment  = "dev"
+
+# Network
+vpc_cidr = "10.5.0.0/16"
+azs      = ["ap-northeast-2a", "ap-northeast-2c"]
+
+public_subnet_cidrs   = ["10.5.0.0/24", "10.5.1.0/24", "10.5.2.0/24"]
+private_subnet_cidrs  = ["10.5.16.0/20", "10.5.32.0/20", "10.5.48.0/20"]
+database_subnet_cidrs = ["10.5.240.0/24", "10.5.241.0/24", "10.5.242.0/24"]
+
+enable_multi_nat = false # Single NAT for dev cost optimization
+
+# EKS
+cluster_name        = "team5-dev-eks"
+node_desired_size   = 2
+node_min_size       = 1
+node_max_size       = 5
+node_instance_types = ["t3.medium"]
+
+# RDS
+db_instance_class      = "db.t4g.micro"
+db_multi_az            = false
+db_deletion_protection = false
+db_skip_final_snapshot = true
+db_backup_retention    = 1
+
+# Redis
+redis_node_type          = "cache.t4g.micro"
+redis_num_cache_clusters = 1
+
+allowed_ssh_cidrs = [] # SSH 22 is completely closed by default, rely on SSM
+
+# EKS Access Control (Replace with real team member IAM User ARNs in your AWS organization)
+team_member_user_arns = {
+  "jehoon"  = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_1", role = "admin" }
+  "sihyun"  = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_2", role = "developer" }
+  "jihyeon" = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_3", role = "developer" }
+  "sungmin" = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_4", role = "developer" }
+  "hyeonsu" = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_5", role = "developer" }
+}
