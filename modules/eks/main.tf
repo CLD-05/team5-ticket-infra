@@ -21,8 +21,8 @@ module "eks" {
   authentication_mode = "API_AND_CONFIG_MAP"
 
   create_cloudwatch_log_group = false
-  cluster_enabled_log_types   = ["api", "authenticator", "controllerManager", "scheduler"]
-
+  cluster_enabled_log_types   = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  
   cluster_addons = {
     coredns = {
       resolve_conflicts = "OVERWRITE"
