@@ -26,17 +26,17 @@ variable "azs" {
 
 variable "public_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.0.0/24", "10.5.1.0/24", "10.5.2.0/24"]
+  default = ["10.5.0.0/24", "10.5.1.0/24"]
 }
 
 variable "private_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.16.0/20", "10.5.32.0/20", "10.5.48.0/20"]
+  default = ["10.5.16.0/20", "10.5.32.0/20"]
 }
 
 variable "database_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.240.0/24", "10.5.241.0/24", "10.5.242.0/24"]
+  default = ["10.5.240.0/24", "10.5.241.0/24"]
 }
 
 variable "enable_multi_nat" {
@@ -171,14 +171,11 @@ variable "ecr_max_tagged_image_count" {
 
 # Access Control Variables
 variable "team_member_user_arns" {
-  type = map(string)
-  default = {
-    "jehoon"  = "arn:aws:iam::123456789012:user/team5-jehoon"
-    "sihyun"  = "arn:aws:iam::123456789012:user/team5-sihyun"
-    "jihyun"  = "arn:aws:iam::123456789012:user/team5-jihyun"
-    "sungmin" = "arn:aws:iam::123456789012:user/team5-sungmin"
-    "hyeonsu" = "arn:aws:iam::123456789012:user/team5-hyeonsu"
-  }
+  type = map(object({
+    arn  = string
+    role = string
+  }))
+  default = {}
 }
 
 variable "allowed_ssh_cidrs" {

@@ -3,7 +3,7 @@ module "secrets" {
 
   environment    = var.environment
   project_name   = var.project_name
-  db_endpoint    = module.database.db_endpoint
+  db_endpoint    = module.database.db_proxy_endpoint
   db_name        = module.database.db_name
   db_username    = module.database.db_username
   db_password    = module.database.db_password

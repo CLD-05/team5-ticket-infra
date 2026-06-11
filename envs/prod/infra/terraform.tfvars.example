@@ -1,0 +1,42 @@
+region       = "ap-northeast-2"
+project_name = "team5-ticket"
+environment  = "prod"
+
+# Network
+vpc_cidr = "10.5.0.0/16"
+azs      = ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"] # 3 AZs for High Availability
+
+public_subnet_cidrs   = ["10.5.0.0/24", "10.5.1.0/24", "10.5.2.0/24"]
+private_subnet_cidrs  = ["10.5.16.0/20", "10.5.32.0/20", "10.5.48.0/20"]
+database_subnet_cidrs = ["10.5.240.0/24", "10.5.241.0/24", "10.5.242.0/24"]
+
+enable_multi_nat = true # Multi-NAT (one per AZ) for production HA
+
+# EKS
+cluster_name        = "team5-prod-eks"
+node_desired_size   = 3
+node_min_size       = 3
+node_max_size       = 8
+node_instance_types = ["m6i.large"] # Production grade instance
+
+# RDS
+db_instance_class      = "db.m6i.large"
+db_multi_az            = true  # Multi-AZ standby replica for automatic failover
+db_deletion_protection = true  # Hardened deletion protection
+db_skip_final_snapshot = false # Retain final snapshot on destroy
+db_backup_retention    = 7     # 7 days backup retention
+
+# Redis
+redis_node_type          = "cache.m7g.large" # Production node size
+redis_num_cache_clusters = 2                 # Secondary node enabled with auto-failover
+
+allowed_ssh_cidrs = [] # Strictly SSM Session Manager, no open port 22
+
+# EKS Access Control (Replace with real team member IAM User ARNs in your AWS organization)
+team_member_user_arns = {
+  "jehoon"  = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_1", role = "admin" }
+  "sihyun"  = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_2", role = "developer" }
+  "jihyeon" = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_3", role = "developer" }
+  "sungmin" = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_4", role = "developer" }
+  "hyeonsu" = { arn = "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:user/YOUR_IAM_USERNAME_5", role = "developer" }
+}

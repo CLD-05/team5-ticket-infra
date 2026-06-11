@@ -22,7 +22,6 @@ module "eks" {
 
   create_cloudwatch_log_group = false
   cluster_enabled_log_types   = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-
   cluster_addons = {
     coredns = {
       resolve_conflicts = "OVERWRITE"
@@ -111,6 +110,7 @@ module "ebs_csi_irsa" {
   }
 }
 
+
 # ---------------------------------------------------------------------------
 # Cluster Autoscaler auto-discovery 태그
 # ---------------------------------------------------------------------------
@@ -149,3 +149,4 @@ resource "aws_autoscaling_group_tag" "ca_owned" {
     propagate_at_launch = false
   }
 }
+
