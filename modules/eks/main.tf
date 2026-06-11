@@ -52,6 +52,8 @@ module "eks" {
 
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = var.node_instance_types
+      max_pods                   = 110
+      enable_bootstrap_user_data = true
 
       desired_size = var.node_desired_size
       min_size     = var.node_min_size
