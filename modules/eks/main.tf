@@ -22,7 +22,7 @@ module "eks" {
 
   create_cloudwatch_log_group = false
   cluster_enabled_log_types   = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-
+  
   cluster_addons = {
     coredns = {
       resolve_conflicts = "OVERWRITE"

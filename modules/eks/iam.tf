@@ -1,12 +1,17 @@
 data "aws_caller_identity" "current" {}
 
+# =====================================
+# EKS Pod Identity Common Assume Role Doc
+# =====================================
 data "aws_iam_policy_document" "eks_pod_identity_assume" {
   statement {
     effect = "Allow"
+
     principals {
       type        = "Service"
       identifiers = ["pods.eks.amazonaws.com"]
     }
+
     actions = [
       "sts:AssumeRole",
       "sts:TagSession"
@@ -14,6 +19,9 @@ data "aws_iam_policy_document" "eks_pod_identity_assume" {
   }
 }
 
+# =====================================
+# 1. AWS Load Balancer Controller (LBC) IAM
+# =====================================
 resource "aws_iam_role" "lbc" {
   name                 = "team5-${var.environment}-lbc-role"
   permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
@@ -31,16 +39,20 @@ resource "aws_iam_policy" "lbc" {
 
   policy = jsonencode({
     Version = "2012-10-17"
+
     Statement = [
       {
         Effect = "Allow"
+
         Action = [
           "iam:CreateServiceLinkedRole"
         ]
+
         Resource = "arn:aws:iam::*:role/aws-service-role/elasticloadbalancing.amazonaws.com/AWSServiceRoleForElasticLoadBalancing"
       },
       {
         Effect = "Allow"
+
         Action = [
           "ec2:DescribeAccountAttributes",
           "ec2:DescribeAddresses",
@@ -66,10 +78,12 @@ resource "aws_iam_policy" "lbc" {
           "elasticloadbalancing:DescribeTargetHealth",
           "elasticloadbalancing:DescribeTrustStores"
         ]
+
         Resource = "*"
       },
       {
         Effect = "Allow"
+
         Action = [
           "cognito-idp:DescribeUserPoolClient",
           "acm:ListCertificates",
@@ -89,29 +103,33 @@ resource "aws_iam_policy" "lbc" {
           "shield:CreateProtection",
           "shield:DeleteProtection"
         ]
+
         Resource = "*"
       },
       {
         Effect = "Allow"
+
         Action = [
           "ec2:AuthorizeSecurityGroupIngress",
           "ec2:RevokeSecurityGroupIngress",
           "ec2:CreateSecurityGroup",
-          "ec2:AuthorizeSecurityGroupIngress",
-          "ec2:RevokeSecurityGroupIngress",
           "ec2:DeleteSecurityGroup"
         ]
+
         Resource = "*"
       },
       {
         Effect = "Allow"
+
         Action = [
           "ec2:CreateTags"
         ]
+
         Resource = "arn:aws:ec2:*:*:security-group/*"
       },
       {
         Effect = "Allow"
+
         Action = [
           "elasticloadbalancing:CreateLoadBalancer",
           "elasticloadbalancing:CreateTargetGroup",
@@ -120,14 +138,17 @@ resource "aws_iam_policy" "lbc" {
           "elasticloadbalancing:CreateRule",
           "elasticloadbalancing:DeleteRule"
         ]
+
         Resource = "*"
       },
       {
         Effect = "Allow"
+
         Action = [
           "elasticloadbalancing:AddTags",
           "elasticloadbalancing:RemoveTags"
         ]
+
         Resource = [
           "arn:aws:elasticloadbalancing:*:*:loadbalancer/net/*",
           "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*",
@@ -138,6 +159,7 @@ resource "aws_iam_policy" "lbc" {
       },
       {
         Effect = "Allow"
+
         Action = [
           "elasticloadbalancing:ModifyLoadBalancerAttributes",
           "elasticloadbalancing:SetIpAddressType",
@@ -148,14 +170,17 @@ resource "aws_iam_policy" "lbc" {
           "elasticloadbalancing:ModifyTargetGroupAttributes",
           "elasticloadbalancing:DeleteTargetGroup"
         ]
+
         Resource = "*"
       },
       {
         Effect = "Allow"
+
         Action = [
           "elasticloadbalancing:RegisterTargets",
           "elasticloadbalancing:DeregisterTargets"
         ]
+
         Resource = "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*"
       }
     ]
@@ -167,6 +192,16 @@ resource "aws_iam_role_policy_attachment" "lbc" {
   policy_arn = aws_iam_policy.lbc.arn
 }
 
+resource "aws_eks_pod_identity_association" "lbc" {
+  cluster_name    = var.cluster_name
+  namespace       = "kube-system"
+  service_account = "aws-load-balancer-controller"
+  role_arn        = aws_iam_role.lbc.arn
+}
+
+# =====================================
+# 2. External Secrets Operator (ESO) IAM
+# =====================================
 resource "aws_iam_role" "eso" {
   name                 = "team5-${var.environment}-eso-role"
   permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
@@ -184,22 +219,29 @@ resource "aws_iam_policy" "eso" {
 
   policy = jsonencode({
     Version = "2012-10-17"
+
     Statement = [
       {
         Effect = "Allow"
+
         Action = [
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret"
         ]
-        Resource = "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:team5-${var.environment}-*"
+
+        # 실제 Secrets Manager 이름: team5/dev/ticket-app
+        # 따라서 ARN 패턴은 team5/${var.environment}/* 형태로 맞춰야 함
+        Resource = "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:team5/${var.environment}/*"
       },
       {
         Effect = "Allow"
+
         Action = [
           "ssm:GetParameter",
           "ssm:GetParameters",
           "ssm:GetParameterHistory"
         ]
+
         Resource = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/team5/${var.environment}/*"
       }
     ]
@@ -211,6 +253,16 @@ resource "aws_iam_role_policy_attachment" "eso" {
   policy_arn = aws_iam_policy.eso.arn
 }
 
+resource "aws_eks_pod_identity_association" "eso" {
+  cluster_name    = var.cluster_name
+  namespace       = "external-secrets"
+  service_account = "external-secrets"
+  role_arn        = aws_iam_role.eso.arn
+}
+
+# =====================================
+# 3. ExternalDNS IAM
+# =====================================
 resource "aws_iam_role" "external_dns" {
   name                 = "team5-${var.environment}-external-dns-role"
   permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
@@ -228,21 +280,26 @@ resource "aws_iam_policy" "external_dns" {
 
   policy = jsonencode({
     Version = "2012-10-17"
+
     Statement = [
       {
         Effect = "Allow"
+
         Action = [
           "route53:ChangeResourceRecordSets"
         ]
+
         Resource = "arn:aws:route53:::hostedzone/*"
       },
       {
         Effect = "Allow"
+
         Action = [
           "route53:ListHostedZones",
           "route53:ListResourceRecordSets",
           "route53:ListTagsForResource"
         ]
+
         Resource = "*"
       }
     ]
@@ -254,25 +311,8 @@ resource "aws_iam_role_policy_attachment" "external_dns" {
   policy_arn = aws_iam_policy.external_dns.arn
 }
 
-# AWS Load Balancer Controller (LBC) 연결
-resource "aws_eks_pod_identity_association" "alb_controller" {
-  cluster_name    = module.eks.cluster_name
-  namespace       = "kube-system"
-  service_account = "aws-load-balancer-controller"
-  role_arn        = aws_iam_role.lbc.arn
-}
-
-# External Secrets Operator (ESO) 연결
-resource "aws_eks_pod_identity_association" "external_secrets" {
-  cluster_name    = module.eks.cluster_name
-  namespace       = "external-secrets"
-  service_account = "external-secrets"
-  role_arn        = aws_iam_role.eso.arn
-}
-
-# ExternalDNS 연결
 resource "aws_eks_pod_identity_association" "external_dns" {
-  cluster_name    = module.eks.cluster_name
+  cluster_name    = var.cluster_name
   namespace       = "external-dns"
   service_account = "external-dns"
   role_arn        = aws_iam_role.external_dns.arn
