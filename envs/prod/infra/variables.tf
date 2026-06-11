@@ -10,7 +10,7 @@ variable "project_name" {
 
 variable "environment" {
   type    = string
-  default = "dev"
+  default = "prod"
 }
 
 # Network Variables
@@ -21,7 +21,7 @@ variable "vpc_cidr" {
 
 variable "azs" {
   type    = list(string)
-  default = ["ap-northeast-2a", "ap-northeast-2c"]
+  default = ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
 }
 
 variable "public_subnet_cidrs" {
@@ -41,7 +41,7 @@ variable "database_subnet_cidrs" {
 
 variable "enable_multi_nat" {
   type    = bool
-  default = false
+  default = true
 }
 
 # EKS Variables
@@ -52,22 +52,22 @@ variable "cluster_name" {
 
 variable "node_desired_size" {
   type    = number
-  default = 2
+  default = 3
 }
 
 variable "node_min_size" {
   type    = number
-  default = 1
+  default = 2
 }
 
 variable "node_max_size" {
   type    = number
-  default = 5
+  default = 10
 }
 
 variable "node_instance_types" {
   type    = list(string)
-  default = ["t3.medium"]
+  default = ["t3.large"]
 }
 
 # RDS Variables
@@ -171,14 +171,11 @@ variable "ecr_max_tagged_image_count" {
 
 # Access Control Variables
 variable "team_member_user_arns" {
-  type = map(string)
-  default = {
-    "jehoon"  = "arn:aws:iam::123456789012:user/team5-jehoon"
-    "sihyun"  = "arn:aws:iam::123456789012:user/team5-sihyun"
-    "jihyun"  = "arn:aws:iam::123456789012:user/team5-jihyun"
-    "sungmin" = "arn:aws:iam::123456789012:user/team5-sungmin"
-    "hyeonsu" = "arn:aws:iam::123456789012:user/team5-hyeonsu"
-  }
+  type = map(object({
+    arn  = string
+    role = string
+  }))
+  default = {}
 }
 
 variable "allowed_ssh_cidrs" {
