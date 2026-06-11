@@ -1,6 +1,6 @@
 variable "name_prefix" {
   type        = string
-  description = "리소스 이름 접두사 (예: team5-dev)"
+  description = "리소스 이름 접두사 (예: team5-ticket-dev)"
 }
 
 variable "oidc_provider_arn" {
@@ -16,6 +16,11 @@ variable "oidc_provider_url" {
 variable "booking_queue_arn" {
   type        = string
   description = "KEDA가 폴링할 booking-queue SQS ARN (sqs 모듈 output에서 주입)"
+}
+
+variable "cluster_name" {
+  type        = string
+  description = "EKS 클러스터 이름 (Cluster Autoscaler IAM 태그 조건 + ASG auto-discovery 태그 키에 사용. eks 모듈 output cluster_name 주입)"
 }
 
 variable "keda_namespace" {
@@ -42,7 +47,25 @@ variable "yace_service_account" {
   default     = "yace"
 }
 
+variable "cluster_autoscaler_namespace" {
+  type        = string
+  description = "Cluster Autoscaler 설치 네임스페이스"
+  default     = "kube-system"
+}
+
+variable "cluster_autoscaler_service_account" {
+  type        = string
+  description = "Cluster Autoscaler ServiceAccount 이름 (cluster-autoscaler.yaml helm rbac.serviceAccount.name과 일치시킬 것)"
+  default     = "cluster-autoscaler"
+}
+
 variable "tags" {
   type    = map(string)
   default = {}
+}
+
+variable "role_permissions_boundary_arn" {
+  type        = string
+  description = "IAM role permissions boundary ARN"
+  default     = null
 }

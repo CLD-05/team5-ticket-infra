@@ -1,16 +1,18 @@
 # modules/monitoring
 # 관측성 & 탄력성의 "AWS 레벨" 책임만 담당 (IRSA/IAM).
-# 차트 설치(kube-prometheus-stack, KEDA)는 config repo(ArgoCD)가 담당 -> 여기선 helm/k8s provider 안 씀.
+# 차트 설치(kube-prometheus-stack, KEDA, cluster-autoscaler)는 config repo(ArgoCD)가 담당 -> 여기선 helm/k8s provider 안 씀.
 #
 # 현재 포함:
-#   - KEDA operator IRSA : booking-queue 폴링 권한 (aws-sqs-queue scaler용)
-#   - YACE IRSA          : CloudWatch SQS 메트릭을 Prometheus로 들여올 권한
+#   - KEDA operator IRSA      : booking-queue 폴링 권한 (aws-sqs-queue scaler용)
+#   - YACE IRSA               : CloudWatch SQS 메트릭을 Prometheus로 들여올 권한
+#   - Cluster Autoscaler IRSA : Pending Pod 발생 시 노드그룹(ASG) 스케일 권한
 # 확장 예정(필요 시 같은 패턴으로 추가):
 #   - Grafana CloudWatch datasource IRSA (필요 시)
 
 locals {
   keda_role_name = "${var.name_prefix}-keda-sqs"
   yace_role_name = "${var.name_prefix}-yace-cw"
+  ca_role_name   = "${var.name_prefix}-cluster-autoscaler"
   # eks 모듈 oidc_provider_url 은 https:// 스킴이 붙어 나옴.
   # IAM 신뢰조건 키는 스킴 없는 호스트라야 해서 제거 (이미 없는 경우도 안전).
   oidc_host = replace(var.oidc_provider_url, "https://", "")
@@ -45,9 +47,10 @@ data "aws_iam_policy_document" "keda_assume" {
 }
 
 resource "aws_iam_role" "keda" {
-  name               = local.keda_role_name
-  assume_role_policy = data.aws_iam_policy_document.keda_assume.json
-  tags               = var.tags
+  name                 = local.keda_role_name
+  assume_role_policy   = data.aws_iam_policy_document.keda_assume.json
+  permissions_boundary = var.role_permissions_boundary_arn
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "keda_sqs_read" {
@@ -96,9 +99,10 @@ data "aws_iam_policy_document" "yace_assume" {
 }
 
 resource "aws_iam_role" "yace" {
-  name               = local.yace_role_name
-  assume_role_policy = data.aws_iam_policy_document.yace_assume.json
-  tags               = var.tags
+  name                 = local.yace_role_name
+  assume_role_policy   = data.aws_iam_policy_document.yace_assume.json
+  permissions_boundary = var.role_permissions_boundary_arn
+  tags                 = var.tags
 }
 
 # YACE는 CloudWatch 메트릭 조회 + 리소스 태그로 대상(SQS 큐) 자동 발견.
@@ -120,4 +124,87 @@ resource "aws_iam_role_policy" "yace_cloudwatch" {
   name   = "${local.yace_role_name}-read"
   role   = aws_iam_role.yace.id
   policy = data.aws_iam_policy_document.yace_cloudwatch.json
+}
+
+# ---------------------------------------------------------------------------
+# Cluster Autoscaler IRSA — Pending Pod 감지 시 노드그룹(ASG) 스케일
+# CA Pod은 var.cluster_autoscaler_namespace(기본 kube-system)에서
+# var.cluster_autoscaler_service_account(기본 cluster-autoscaler) SA로 동작.
+# helm chart의 rbac.serviceAccount.name 과 반드시 일치시킬 것.
+# ---------------------------------------------------------------------------
+data "aws_iam_policy_document" "cluster_autoscaler_assume" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [var.oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_host}:sub"
+      values   = ["system:serviceaccount:${var.cluster_autoscaler_namespace}:${var.cluster_autoscaler_service_account}"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_host}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "cluster_autoscaler" {
+  name                 = local.ca_role_name
+  assume_role_policy   = data.aws_iam_policy_document.cluster_autoscaler_assume.json
+  permissions_boundary = var.role_permissions_boundary_arn
+  tags                 = var.tags
+}
+
+# 권한 2분할:
+#  (1) Describe* : 모든 ASG/EC2 조회는 리소스 단위 제한이 안 되므로 와일드카드.
+#  (2) 실제 스케일 조작(SetDesiredCapacity/Terminate)은 우리 클러스터 태그가
+#      박힌 ASG로만 제한 → 최소권한. 태그 키는 ASG auto-discovery 태그와 동일.
+data "aws_iam_policy_document" "cluster_autoscaler" {
+  statement {
+    sid    = "Describe"
+    effect = "Allow"
+    actions = [
+      "autoscaling:DescribeAutoScalingGroups",
+      "autoscaling:DescribeAutoScalingInstances",
+      "autoscaling:DescribeLaunchConfigurations",
+      "autoscaling:DescribeScalingActivities",
+      "autoscaling:DescribeTags",
+      "ec2:DescribeImages",
+      "ec2:DescribeInstanceTypes",
+      "ec2:DescribeLaunchTemplateVersions",
+      "ec2:GetInstanceTypesFromInstanceRequirements",
+      "eks:DescribeNodegroup",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "ModifyOwnedAsg"
+    effect = "Allow"
+    actions = [
+      "autoscaling:SetDesiredCapacity",
+      "autoscaling:TerminateInstanceInAutoScalingGroup",
+    ]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "autoscaling:ResourceTag/k8s.io/cluster-autoscaler/${var.cluster_name}"
+      values   = ["owned"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "cluster_autoscaler" {
+  name   = "${local.ca_role_name}-scale"
+  role   = aws_iam_role.cluster_autoscaler.id
+  policy = data.aws_iam_policy_document.cluster_autoscaler.json
 }
