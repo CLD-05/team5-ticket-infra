@@ -21,9 +21,9 @@ data "aws_iam_policy_document" "gha_oidc_assume" {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:team5-ticket-app:*",
-        "repo:team5-ticket-infra:*",
-        "repo:team5-ticket-config:*"
+        "repo:CLD-05/team5-ticket-app:*",
+        "repo:CLD-05/team5-ticket-infra:*",
+        "repo:CLD-05/team5-ticket-config:*"
       ]
     }
   }
