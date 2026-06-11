@@ -317,3 +317,24 @@ resource "aws_eks_pod_identity_association" "external_dns" {
   service_account = "external-dns"
   role_arn        = aws_iam_role.external_dns.arn
 }
+
+# =====================================
+# 4. Cluster Autoscaler IAM Role (IRSA)
+# =====================================
+module "cluster_autoscaler_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.0"
+
+  role_name                     = "team5-${var.environment}-cluster-autoscaler"
+  role_permissions_boundary_arn = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+  policy_name_prefix            = "team5-"
+  attach_cluster_autoscaler_policy = true
+  cluster_autoscaler_cluster_names = [module.eks.cluster_name]
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:cluster-autoscaler"]
+    }
+  }
+}
