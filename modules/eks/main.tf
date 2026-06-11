@@ -30,6 +30,12 @@ module "eks" {
     kube-proxy = {}
     vpc-cni = {
       resolve_conflicts = "OVERWRITE"
+      configuration_values = jsonencode({
+        env = {
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
     }
     eks-pod-identity-agent = {
       resolve_conflicts = "OVERWRITE"
