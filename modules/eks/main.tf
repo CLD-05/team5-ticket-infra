@@ -22,7 +22,6 @@ module "eks" {
 
   create_cloudwatch_log_group = false
   cluster_enabled_log_types   = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-  
   cluster_addons = {
     coredns = {
       resolve_conflicts = "OVERWRITE"
@@ -110,3 +109,44 @@ module "ebs_csi_irsa" {
     }
   }
 }
+
+
+# ---------------------------------------------------------------------------
+# Cluster Autoscaler auto-discovery 태그
+# ---------------------------------------------------------------------------
+# ⚠️ 왜 노드그룹 "tags"가 아니라 별도 aws_autoscaling_group_tag 인가?
+#   EKS Managed Node Group의 tags 는 노드그룹 리소스/EC2 인스턴스엔 붙지만,
+#   그 노드그룹이 만든 "ASG" 에는 자동 전파되지 않는다.
+#   CA는 ASG에 박힌 아래 두 태그를 보고 대상 노드그룹을 발견하므로,
+#   ASG에 직접 태그를 박아야 한다.
+#
+#   - k8s.io/cluster-autoscaler/enabled = true          (이 ASG는 CA 대상)
+#   - k8s.io/cluster-autoscaler/<cluster_name> = owned   (이 클러스터 소유)
+#
+# node_group_autoscaling_group_names: v20 모듈이 노드그룹별로 노출하는 ASG 이름 리스트.
+locals {
+  ca_asg_names = toset(module.eks.eks_managed_node_groups["app"].node_group_autoscaling_group_names)
+}
+
+resource "aws_autoscaling_group_tag" "ca_enabled" {
+  for_each               = local.ca_asg_names
+  autoscaling_group_name = each.value
+
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/enabled"
+    value               = "true"
+    propagate_at_launch = false
+  }
+}
+
+resource "aws_autoscaling_group_tag" "ca_owned" {
+  for_each               = local.ca_asg_names
+  autoscaling_group_name = each.value
+
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/${module.eks.cluster_name}"
+    value               = "owned"
+    propagate_at_launch = false
+  }
+}
+
