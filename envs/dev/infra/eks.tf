@@ -12,4 +12,5 @@ module "eks" {
   node_instance_types            = var.node_instance_types
   bastion_role_arn               = module.bastion.bastion_role_arn
   team_member_user_arns          = var.team_member_user_arns
+  bastion_sg_id                  = module.bastion.bastion_sg_id
 }

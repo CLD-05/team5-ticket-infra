@@ -158,3 +158,17 @@ resource "aws_autoscaling_group_tag" "ca_owned" {
   }
 }
 
+# ---------------------------------------------------------------------------
+# 배스천 호스트 → EKS API 서버 보안 그룹 인바운드 허용 (443 포트)
+# ---------------------------------------------------------------------------
+resource "aws_security_group_rule" "eks_api_bastion" {
+  count                    = var.bastion_sg_id != null ? 1 : 0
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  security_group_id        = module.eks.cluster_security_group_id
+  source_security_group_id = var.bastion_sg_id
+  description              = "Allow Bastion host to communicate with EKS API server"
+}
+

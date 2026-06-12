@@ -63,3 +63,9 @@ variable "node_instance_types" {
   type        = list(string)
   description = "Managed Node Group 인스턴스 타입 리스트"
 }
+
+variable "bastion_sg_id" {
+  type        = string
+  description = "배스천 호스트 보안 그룹 ID"
+  default     = null
+}
