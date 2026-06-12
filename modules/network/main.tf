@@ -27,8 +27,9 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "team5-${var.environment}-subnet-pub-${var.azs[count.index]}"
-    Team = "team5"
+    Name                     = "team5-${var.environment}-subnet-pub-${var.azs[count.index]}"
+    Team                     = "team5"
+    "kubernetes.io/role/elb" = "1"
   }
 }
 
@@ -39,8 +40,9 @@ resource "aws_subnet" "private" {
   availability_zone = var.azs[count.index]
 
   tags = {
-    Name = "team5-${var.environment}-subnet-pri-${var.azs[count.index]}"
-    Team = "team5"
+    Name                              = "team5-${var.environment}-subnet-pri-${var.azs[count.index]}"
+    Team                              = "team5"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 

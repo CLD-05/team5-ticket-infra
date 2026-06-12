@@ -76,7 +76,8 @@ resource "aws_iam_policy" "lbc" {
           "elasticloadbalancing:DescribeTargetGroups",
           "elasticloadbalancing:DescribeTargetGroupAttributes",
           "elasticloadbalancing:DescribeTargetHealth",
-          "elasticloadbalancing:DescribeTrustStores"
+          "elasticloadbalancing:DescribeTrustStores",
+          "elasticloadbalancing:DescribeTags"
         ]
 
         Resource = "*"
@@ -337,4 +338,59 @@ module "cluster_autoscaler_irsa" {
       namespace_service_accounts = ["kube-system:cluster-autoscaler"]
     }
   }
+}
+
+# =====================================
+# 5. Ticket Service & Booking Worker (SQS access) IAM
+# =====================================
+resource "aws_iam_role" "app_sqs" {
+  name                 = "team5-${var.environment}-app-sqs-role"
+  permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+  assume_role_policy   = data.aws_iam_policy_document.eks_pod_identity_assume.json
+
+  tags = {
+    Name = "team5-${var.environment}-app-sqs-role"
+    Team = "team5"
+  }
+}
+
+resource "aws_iam_policy" "app_sqs" {
+  name        = "team5-${var.environment}-app-sqs-policy"
+  description = "IAM policy for application SQS access"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:GetQueueUrl"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "app_sqs" {
+  role       = aws_iam_role.app_sqs.name
+  policy_arn = aws_iam_policy.app_sqs.arn
+}
+
+resource "aws_eks_pod_identity_association" "ticket_service" {
+  cluster_name    = module.eks.cluster_name
+  namespace       = "ticketing"
+  service_account = "ticket-service"
+  role_arn        = aws_iam_role.app_sqs.arn
+}
+
+resource "aws_eks_pod_identity_association" "booking_worker" {
+  cluster_name    = module.eks.cluster_name
+  namespace       = "ticketing"
+  service_account = "booking-worker"
+  role_arn        = aws_iam_role.app_sqs.arn
 }
