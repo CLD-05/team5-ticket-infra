@@ -1,0 +1,321 @@
+name: Terraform CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "envs/**"
+      - "modules/**"
+      - ".github/workflows/terraform.yml"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "envs/**"
+      - "modules/**"
+      - ".github/workflows/terraform.yml"
+
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ACCOUNT_ID: "194722398200"
+  TERRAFORM_VERSION: "1.11.4"
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  detect-changes:
+    name: Detect Terraform Changes
+    runs-on: ubuntu-latest
+    outputs:
+      dev_infra: ${{ steps.filter.outputs.dev_infra }}
+      dev_platform_addons: ${{ steps.filter.outputs.dev_platform_addons }}
+      prod_infra: ${{ steps.filter.outputs.prod_infra }}
+      prod_platform_addons: ${{ steps.filter.outputs.prod_platform_addons }}
+      modules: ${{ steps.filter.outputs.modules }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect changed Terraform layers
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            dev_infra:
+              - 'envs/dev/infra/**'
+            dev_platform_addons:
+              - 'envs/dev/platform-addons/**'
+            prod_infra:
+              - 'envs/prod/infra/**'
+            prod_platform_addons:
+              - 'envs/prod/platform-addons/**'
+            modules:
+              - 'modules/**'
+
+  terraform-plan:
+    name: Plan (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: dev/infra
+            environment: dev
+            working_directory: envs/dev/infra
+            changed_output: dev_infra
+          - name: dev/platform-addons
+            environment: dev
+            working_directory: envs/dev/platform-addons
+            changed_output: dev_platform_addons
+          - name: prod/infra
+            environment: prod
+            working_directory: envs/prod/infra
+            changed_output: prod_infra
+          - name: prod/platform-addons
+            environment: prod
+            working_directory: envs/prod/platform-addons
+            changed_output: prod_platform_addons
+    defaults:
+      run:
+        working-directory: ${{ matrix.working_directory }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check whether this layer should run
+        id: should_run
+        run: |
+          layer_changed='${{ needs.detect-changes.outputs[matrix.changed_output] }}'
+          modules_changed='${{ needs.detect-changes.outputs.modules }}'
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials with OIDC
+        if: steps.should_run.outputs.run == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/team5-gha-${{ matrix.environment }}-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        if: steps.should_run.outputs.run == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform fmt
+        if: steps.should_run.outputs.run == 'true'
+        id: fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        if: steps.should_run.outputs.run == 'true'
+        id: init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        if: steps.should_run.outputs.run == 'true'
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform plan
+        if: steps.should_run.outputs.run == 'true'
+        id: plan
+        run: terraform plan -input=false -no-color -out=tfplan
+        continue-on-error: true
+
+      - name: Write plan summary
+        if: steps.should_run.outputs.run == 'true'
+        run: |
+          {
+            echo "## Terraform Plan - ${{ matrix.name }}"
+            echo ""
+            echo "- Environment: \`${{ matrix.environment }}\`"
+            echo "- Working directory: \`${{ matrix.working_directory }}\`"
+            echo "- fmt: \`${{ steps.fmt.outcome }}\`"
+            echo "- init: \`${{ steps.init.outcome }}\`"
+            echo "- validate: \`${{ steps.validate.outcome }}\`"
+            echo "- plan: \`${{ steps.plan.outcome }}\`"
+            echo ""
+            echo "\`\`\`text"
+            if [ -f tfplan ]; then
+              terraform show -no-color tfplan | sed -n '1,220p'
+            else
+              echo "tfplan file was not created. Check the Terraform plan step logs."
+            fi
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment plan on PR
+        if: github.event_name == 'pull_request' && steps.should_run.outputs.run == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require("child_process");
+            const dir = "${{ matrix.working_directory }}";
+            let plan = "";
+
+            try {
+              plan = execSync(`terraform -chdir=${dir} show -no-color tfplan`, { encoding: "utf8" });
+            } catch (error) {
+              plan = `terraform show failed: ${error.message}`;
+            }
+
+            const maxLength = 60000;
+            if (plan.length > maxLength) {
+              plan = plan.slice(0, maxLength) + "\n\n... plan output truncated ...";
+            }
+
+            const body = [
+              "## Terraform Plan - ${{ matrix.name }}",
+              "",
+              "| Check | Result |",
+              "| --- | --- |",
+              "| fmt | `${{ steps.fmt.outcome }}` |",
+              "| init | `${{ steps.init.outcome }}` |",
+              "| validate | `${{ steps.validate.outcome }}` |",
+              "| plan | `${{ steps.plan.outcome }}` |",
+              "",
+              "<details><summary>Plan output</summary>",
+              "",
+              "```text",
+              plan,
+              "```",
+              "",
+              "</details>"
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Fail when plan failed
+        if: steps.should_run.outputs.run == 'true' && steps.plan.outcome == 'failure'
+        run: exit 1
+
+  terraform-apply-dev:
+    name: Apply Dev (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: dev/infra
+            working_directory: envs/dev/infra
+            changed_output: dev_infra
+          - name: dev/platform-addons
+            working_directory: envs/dev/platform-addons
+            changed_output: dev_platform_addons
+    defaults:
+      run:
+        working-directory: ${{ matrix.working_directory }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check whether this layer should apply
+        id: should_run
+        run: |
+          layer_changed='${{ needs.detect-changes.outputs[matrix.changed_output] }}'
+          modules_changed='${{ needs.detect-changes.outputs.modules }}'
+
+          if [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials with OIDC
+        if: steps.should_run.outputs.run == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/team5-gha-dev-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        if: steps.should_run.outputs.run == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform init
+        if: steps.should_run.outputs.run == 'true'
+        run: terraform init -input=false
+
+      - name: Terraform apply
+        if: steps.should_run.outputs.run == 'true'
+        run: terraform apply -input=false -auto-approve
+
+  terraform-apply-prod:
+    name: Apply Prod (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: prod
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: prod/infra
+            working_directory: envs/prod/infra
+            changed_output: prod_infra
+          - name: prod/platform-addons
+            working_directory: envs/prod/platform-addons
+            changed_output: prod_platform_addons
+    defaults:
+      run:
+        working-directory: ${{ matrix.working_directory }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check whether this layer should apply
+        id: should_run
+        run: |
+          layer_changed='${{ needs.detect-changes.outputs[matrix.changed_output] }}'
+          modules_changed='${{ needs.detect-changes.outputs.modules }}'
+
+          if [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials with OIDC
+        if: steps.should_run.outputs.run == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/team5-gha-prod-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        if: steps.should_run.outputs.run == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform init
+        if: steps.should_run.outputs.run == 'true'
+        run: terraform init -input=false
+
+      - name: Terraform apply
+        if: steps.should_run.outputs.run == 'true'
+        run: terraform apply -input=false -auto-approve
