@@ -49,3 +49,15 @@ variable "max_receive_count" {
   description = "Number of failed receives before moving a message to DLQ"
   default     = 5
 }
+
+variable "fifo_queue" {
+  type        = bool
+  description = "Enable FIFO queue"
+  default     = false
+}
+
+variable "content_based_deduplication" {
+  type        = bool
+  description = "Enable content based deduplication for FIFO queue"
+  default     = false
+}

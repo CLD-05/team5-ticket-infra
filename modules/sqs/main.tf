@@ -1,9 +1,10 @@
 resource "aws_sqs_queue" "booking_dlq" {
-  name                      = "team5-${var.environment}-${var.dlq_name}"
+  name                      = "team5-${var.environment}-${var.dlq_name}.fifo"
   message_retention_seconds = var.dlq_message_retention_seconds
+  fifo_queue                = var.fifo_queue
 
   tags = {
-    Name        = "team5-${var.environment}-${var.dlq_name}"
+    Name        = "team5-${var.environment}-${var.dlq_name}.fifo"
     Team        = "team5"
     Environment = var.environment
     Project     = var.project_name
@@ -12,10 +13,12 @@ resource "aws_sqs_queue" "booking_dlq" {
 }
 
 resource "aws_sqs_queue" "booking_queue" {
-  name                       = "team5-${var.environment}-${var.queue_name}"
-  delay_seconds              = var.delay_seconds
-  message_retention_seconds  = var.message_retention_seconds
-  visibility_timeout_seconds = var.visibility_timeout_seconds
+  name                        = "team5-${var.environment}-${var.queue_name}.fifo"
+  delay_seconds               = var.delay_seconds
+  message_retention_seconds   = var.message_retention_seconds
+  visibility_timeout_seconds  = var.visibility_timeout_seconds
+  fifo_queue                  = var.fifo_queue
+  content_based_deduplication = var.content_based_deduplication
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.booking_dlq.arn
@@ -23,7 +26,7 @@ resource "aws_sqs_queue" "booking_queue" {
   })
 
   tags = {
-    Name        = "team5-${var.environment}-${var.queue_name}"
+    Name        = "team5-${var.environment}-${var.queue_name}.fifo"
     Team        = "team5"
     Environment = var.environment
     Project     = var.project_name
