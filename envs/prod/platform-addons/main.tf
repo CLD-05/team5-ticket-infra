@@ -35,6 +35,42 @@ provider "helm" {
   }
 }
 
-# --- Placeholders for Platform Addons (Helm Releases) ---
-# Example: ArgoCD, AWS Load Balancer Controller, KEDA, ESO, Prometheus, etc.
-# These will be synced from your Git config repo via GitOps or deployed here.
+# =====================================
+# ArgoCD Bootstrap
+# =====================================
+
+resource "kubernetes_namespace" "argocd" {
+  metadata {
+    name = "argocd"
+  }
+}
+
+resource "helm_release" "argocd" {
+  name       = "argocd"
+  namespace  = kubernetes_namespace.argocd.metadata[0].name
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argo-cd"
+
+  values = [
+    yamlencode({
+      server = {
+        service = {
+          type = "ClusterIP"
+        }
+      }
+    })
+  ]
+
+  depends_on = [
+    kubernetes_namespace.argocd
+  ]
+}
+
+# =====================================
+# GitOps Ownership Boundary
+# =====================================
+#
+# prod/platform-addons는 ArgoCD 자체 설치까지만 담당.
+# AWS Load Balancer Controller, External Secrets Operator, ExternalDNS,
+# KEDA, Prometheus 등 Kubernetes addon과 ticket-service 배포 manifest는
+# config repo를 단일 진실 공급원(SSoT)으로 두고 ArgoCD가 관리.
