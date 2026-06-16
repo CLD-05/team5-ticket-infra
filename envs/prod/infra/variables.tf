@@ -26,17 +26,17 @@ variable "azs" {
 
 variable "public_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.0.0/24", "10.5.1.0/24", "10.5.2.0/24"]
+  default = ["10.5.64.0/24", "10.5.65.0/24", "10.5.66.0/24"]
 }
 
 variable "private_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.16.0/20", "10.5.32.0/20", "10.5.48.0/20"]
+  default = ["10.5.80.0/20", "10.5.96.0/20", "10.5.112.0/20"]
 }
 
 variable "database_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.240.0/24", "10.5.241.0/24", "10.5.242.0/24"]
+  default = ["10.5.128.0/24", "10.5.129.0/24", "10.5.130.0/24"]
 }
 
 variable "enable_multi_nat" {
@@ -62,7 +62,7 @@ variable "node_min_size" {
 
 variable "node_max_size" {
   type    = number
-  default = 10
+  default = 8
 }
 
 variable "node_instance_types" {

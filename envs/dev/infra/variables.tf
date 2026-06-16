@@ -36,7 +36,7 @@ variable "private_subnet_cidrs" {
 
 variable "database_subnet_cidrs" {
   type    = list(string)
-  default = ["10.5.240.0/24", "10.5.241.0/24"]
+  default = ["10.5.48.0/24", "10.5.49.0/24"]
 }
 
 variable "enable_multi_nat" {
