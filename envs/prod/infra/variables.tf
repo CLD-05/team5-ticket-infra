@@ -62,7 +62,7 @@ variable "node_min_size" {
 
 variable "node_max_size" {
   type    = number
-  default = 8
+  default = 10
 }
 
 variable "node_instance_types" {
