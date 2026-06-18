@@ -131,32 +131,6 @@ module "ebs_csi_irsa" {
 #   - k8s.io/cluster-autoscaler/enabled = true          (이 ASG는 CA 대상)
 #   - k8s.io/cluster-autoscaler/<cluster_name> = owned   (이 클러스터 소유)
 #
-# node_group_autoscaling_group_names: v20 모듈이 노드그룹별로 노출하는 ASG 이름 리스트.
-locals {
-  ca_asg_names = toset(module.eks.eks_managed_node_groups["app"].node_group_autoscaling_group_names)
-}
-
-resource "aws_autoscaling_group_tag" "ca_enabled" {
-  for_each               = local.ca_asg_names
-  autoscaling_group_name = each.value
-
-  tag {
-    key                 = "k8s.io/cluster-autoscaler/enabled"
-    value               = "true"
-    propagate_at_launch = false
-  }
-}
-
-resource "aws_autoscaling_group_tag" "ca_owned" {
-  for_each               = local.ca_asg_names
-  autoscaling_group_name = each.value
-
-  tag {
-    key                 = "k8s.io/cluster-autoscaler/${module.eks.cluster_name}"
-    value               = "owned"
-    propagate_at_launch = false
-  }
-}
 
 # ---------------------------------------------------------------------------
 # 배스천 호스트 → EKS API 서버 보안 그룹 인바운드 허용 (443 포트)
