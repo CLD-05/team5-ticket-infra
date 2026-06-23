@@ -371,6 +371,20 @@ resource "aws_iam_policy" "app_sqs" {
           "sqs:GetQueueUrl"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:PutObjectAcl",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::team5-${var.environment}-poster-bucket",
+          "arn:aws:s3:::team5-${var.environment}-poster-bucket/*"
+        ]
       }
     ]
   })
