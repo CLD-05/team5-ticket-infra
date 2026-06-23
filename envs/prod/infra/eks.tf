@@ -5,7 +5,7 @@ module "eks" {
   region                         = var.region
   vpc_id                         = module.network.vpc_id
   subnet_ids                     = module.network.private_subnet_ids
-  cluster_endpoint_public_access = var.environment == "prod" ? false : true
+  cluster_endpoint_public_access = true
   node_desired_size              = var.node_desired_size
   node_min_size                  = var.node_min_size
   node_max_size                  = var.node_max_size
