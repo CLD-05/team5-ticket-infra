@@ -136,8 +136,13 @@ resource "aws_iam_policy" "lbc" {
           "elasticloadbalancing:CreateTargetGroup",
           "elasticloadbalancing:CreateListener",
           "elasticloadbalancing:DeleteListener",
+          "elasticloadbalancing:ModifyListener",
           "elasticloadbalancing:CreateRule",
-          "elasticloadbalancing:DeleteRule"
+          "elasticloadbalancing:DeleteRule",
+          "elasticloadbalancing:ModifyRule",
+          "elasticloadbalancing:AddListenerCertificates",
+          "elasticloadbalancing:RemoveListenerCertificates",
+          "elasticloadbalancing:SetWebAcl"
         ]
 
         Resource = "*"

@@ -59,30 +59,6 @@ resource "kubernetes_namespace" "argocd" {
   }
 }
 
-resource "kubernetes_namespace" "ingress_system" {
-  metadata {
-    name = "ingress-system"
-  }
-}
-
-resource "kubernetes_namespace" "external_secrets" {
-  metadata {
-    name = "external-secrets"
-  }
-}
-
-resource "kubernetes_namespace" "external_dns" {
-  metadata {
-    name = "external-dns"
-  }
-}
-
-resource "kubernetes_namespace" "app" {
-  metadata {
-    name = "ticket-app"
-  }
-}
-
 # =====================================
 # ArgoCD
 # =====================================
@@ -105,88 +81,6 @@ resource "helm_release" "argocd" {
 
   depends_on = [
     kubernetes_namespace.argocd
-  ]
-}
-
-# =====================================
-# AWS Load Balancer Controller
-# =====================================
-
-resource "helm_release" "aws_load_balancer_controller" {
-  name       = "aws-load-balancer-controller"
-  namespace  = kubernetes_namespace.ingress_system.metadata[0].name
-  repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-
-  values = [
-    yamlencode({
-      clusterName = var.cluster_name
-
-      serviceAccount = {
-        create = true
-        name   = "aws-load-balancer-controller"
-      }
-    })
-  ]
-
-  depends_on = [
-    kubernetes_namespace.ingress_system
-  ]
-}
-
-# =====================================
-# External Secrets Operator
-# =====================================
-
-resource "helm_release" "external_secrets" {
-  name       = "external-secrets"
-  namespace  = kubernetes_namespace.external_secrets.metadata[0].name
-  repository = "https://charts.external-secrets.io"
-  chart      = "external-secrets"
-
-  values = [
-    yamlencode({
-      installCRDs = true
-
-      serviceAccount = {
-        create = true
-        name   = "external-secrets"
-      }
-    })
-  ]
-
-  depends_on = [
-    kubernetes_namespace.external_secrets
-  ]
-}
-
-# =====================================
-# ExternalDNS
-# =====================================
-
-resource "helm_release" "external_dns" {
-  name       = "external-dns"
-  namespace  = kubernetes_namespace.external_dns.metadata[0].name
-  repository = "https://kubernetes-sigs.github.io/external-dns/"
-  chart      = "external-dns"
-
-  values = [
-    yamlencode({
-      provider = {
-        name = "aws"
-      }
-
-      policy = "sync"
-
-      serviceAccount = {
-        create = true
-        name   = "external-dns"
-      }
-    })
-  ]
-
-  depends_on = [
-    kubernetes_namespace.external_dns
   ]
 }
 
