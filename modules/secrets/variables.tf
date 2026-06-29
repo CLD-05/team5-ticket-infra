@@ -50,3 +50,9 @@ variable "sqs_queue_arn" {
   type        = string
   description = "Booking queue ARN"
 }
+
+variable "poster_cdn_base_url" {
+  type        = string
+  description = "Base URL for poster images served through CloudFront"
+  default     = ""
+}
