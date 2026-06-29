@@ -51,3 +51,13 @@ output "poster_cloudfront_domain_name" {
   value       = module.s3.cloudfront_domain_name
   description = "Prod poster CloudFront domain name"
 }
+
+output "db_replica_endpoint" {
+  value       = module.database.db_replica_endpoint
+  description = "Prod RDS Read Replica connection endpoint"
+}
+
+output "db_replica_address" {
+  value       = module.database.db_replica_address
+  description = "Prod RDS Read Replica address"
+}

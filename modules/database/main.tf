@@ -269,3 +269,25 @@ resource "aws_db_proxy_target" "main" {
   db_instance_identifier = aws_db_instance.main.identifier
   target_group_name      = aws_db_proxy_default_target_group.main.name
 }
+
+resource "aws_db_instance" "replica" {
+  count = var.environment == "prod" ? 1 : 0
+
+  identifier     = "team5-${var.environment}-rds-replica"
+  instance_class = var.db_instance_class
+  storage_type   = "gp3"
+
+  replicate_source_db = aws_db_instance.main.identifier
+
+  vpc_security_group_ids = [aws_security_group.rds.id]
+
+  skip_final_snapshot = true
+
+  tags = {
+    Name        = "team5-${var.environment}-rds-replica"
+    Team        = "team5"
+    Environment = var.environment
+    Project     = var.project_name
+    Owner       = "team5"
+  }
+}
