@@ -118,7 +118,8 @@ resource "aws_security_group" "rds" {
     protocol  = "tcp"
     security_groups = [
       aws_security_group.rds_proxy.id,
-      var.bastion_sg_id
+      var.bastion_sg_id,
+      var.eks_node_sg_id
     ]
   }
 
