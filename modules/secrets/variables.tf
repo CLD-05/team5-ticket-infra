@@ -56,3 +56,9 @@ variable "poster_cdn_base_url" {
   description = "Base URL for poster images served through CloudFront"
   default     = ""
 }
+
+variable "db_replica_endpoint" {
+  description = "RDS Read Replica endpoint (prod only, empty string if not exists)"
+  type        = string
+  default     = ""
+}

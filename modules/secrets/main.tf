@@ -21,14 +21,15 @@ resource "aws_secretsmanager_secret_version" "app" {
   secret_id = aws_secretsmanager_secret.app.id
 
   secret_string = jsonencode({
-    SPRING_DATASOURCE_URL      = "jdbc:mysql://${var.db_endpoint}/${var.db_name}?useUnicode=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8"
-    SPRING_DATASOURCE_USERNAME = var.db_username
-    SPRING_DATASOURCE_PASSWORD = var.db_password
-    SPRING_DATA_REDIS_HOST     = var.redis_endpoint
-    SPRING_DATA_REDIS_PORT     = tostring(var.redis_port)
-    AWS_SQS_BOOKING_QUEUE_URL  = var.sqs_queue_url
-    AWS_SQS_BOOKING_QUEUE_ARN  = var.sqs_queue_arn
-    APP_S3_CDN_BASE_URL        = var.poster_cdn_base_url
-    JWT_SECRET                 = random_password.jwt.result
+    SPRING_DATASOURCE_URL         = "jdbc:mysql://${var.db_endpoint}/${var.db_name}?useUnicode=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8"
+    SPRING_DATASOURCE_USERNAME    = var.db_username
+    SPRING_DATASOURCE_PASSWORD    = var.db_password
+    SPRING_DATASOURCE_REPLICA_URL = var.db_replica_endpoint != null && var.db_replica_endpoint != "" ? "jdbc:mysql://${var.db_replica_endpoint}/${var.db_name}?useUnicode=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8" : ""
+    SPRING_DATA_REDIS_HOST        = var.redis_endpoint
+    SPRING_DATA_REDIS_PORT        = tostring(var.redis_port)
+    AWS_SQS_BOOKING_QUEUE_URL     = var.sqs_queue_url
+    AWS_SQS_BOOKING_QUEUE_ARN     = var.sqs_queue_arn
+    APP_S3_CDN_BASE_URL           = var.poster_cdn_base_url
+    JWT_SECRET                    = random_password.jwt.result
   })
 }
