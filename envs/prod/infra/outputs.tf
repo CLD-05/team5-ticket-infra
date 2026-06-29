@@ -41,3 +41,13 @@ output "app_secret_name" {
 output "waf_web_acl_arn" {
   value = module.waf.web_acl_arn
 }
+
+output "poster_cloudfront_distribution_id" {
+  value       = module.s3.cloudfront_distribution_id
+  description = "Prod poster CloudFront distribution ID"
+}
+
+output "poster_cloudfront_domain_name" {
+  value       = module.s3.cloudfront_domain_name
+  description = "Prod poster CloudFront domain name"
+}

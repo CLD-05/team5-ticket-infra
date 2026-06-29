@@ -28,6 +28,7 @@ resource "aws_secretsmanager_secret_version" "app" {
     SPRING_DATA_REDIS_PORT     = tostring(var.redis_port)
     AWS_SQS_BOOKING_QUEUE_URL  = var.sqs_queue_url
     AWS_SQS_BOOKING_QUEUE_ARN  = var.sqs_queue_arn
+    APP_S3_CDN_BASE_URL        = var.poster_cdn_base_url
     JWT_SECRET                 = random_password.jwt.result
   })
 }

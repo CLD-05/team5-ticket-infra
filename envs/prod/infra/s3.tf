@@ -1,6 +1,6 @@
 module "s3" {
-  source      = "../../../modules/s3"
-  bucket_name = "team5-prod-poster-bucket"
-  environment = var.environment
+  source            = "../../../modules/s3"
+  bucket_name       = "team5-prod-poster-bucket"
+  environment       = var.environment
+  enable_cloudfront = true
 }
-
