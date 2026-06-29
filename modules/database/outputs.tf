@@ -34,3 +34,13 @@ output "db_proxy_endpoint" {
   value       = "${aws_db_proxy.main.endpoint}:3306"
   description = "The database proxy connection endpoint"
 }
+
+output "db_replica_endpoint" {
+  value       = length(aws_db_instance.replica) > 0 ? aws_db_instance.replica[0].endpoint : null
+  description = "The database replica connection endpoint"
+}
+
+output "db_replica_address" {
+  value       = length(aws_db_instance.replica) > 0 ? aws_db_instance.replica[0].address : null
+  description = "The database replica address"
+}
