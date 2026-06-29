@@ -182,3 +182,8 @@ variable "allowed_ssh_cidrs" {
   type    = list(string)
   default = []
 }
+
+variable "waf_rate_limit" {
+  type    = number
+  default = 2000
+}

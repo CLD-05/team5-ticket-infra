@@ -37,3 +37,7 @@ output "app_secret_name" {
   value       = module.secrets.secret_name
   description = "Prod application runtime secret name"
 }
+
+output "waf_web_acl_arn" {
+  value = module.waf.web_acl_arn
+}
