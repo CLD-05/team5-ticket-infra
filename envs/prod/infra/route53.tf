@@ -24,7 +24,10 @@
     type    = "A"
 
     alias {
-      name                   = "k8s-ticketin-ticketga-6ccc766f17-1744378912.ap-northeast-2.elb.amazonaws.com"
+      # ⚠️ 이 값은 ALB 재생성 시마다 변경됩니다.
+      # Gateway status.addresses에서 현재 ALB DNS를 확인하고 여기를 업데이트하세요.
+      # 확인: kubectl get gateway -n ticketing ticket-gateway -o jsonpath='{.status.addresses}'
+      name                   = "k8s-ticketin-ticketga-cc12cdd6d7-2059893157.ap-northeast-2.elb.amazonaws.com"
       zone_id                = "ZWKZPGTI48KDX" # 👈 ap-northeast-2(서울리전) ALB 고정 호스팅존 ID
       evaluate_target_health = false
     }
