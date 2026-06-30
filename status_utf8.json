@@ -1,0 +1,582 @@
+﻿{
+    "apiVersion": "argoproj.io/v1alpha1",
+    "kind": "Application",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ticket-app-dev\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ticketing\",\"server\":\"https://kubernetes.default.svc\"},\"ignoreDifferences\":[{\"group\":\"apps\",\"jsonPointers\":[\"/spec/replicas\"],\"kind\":\"Deployment\",\"name\":\"booking-worker\"},{\"group\":\"apps\",\"jsonPointers\":[\"/spec/replicas\"],\"kind\":\"Deployment\",\"name\":\"ticket-service\"}],\"project\":\"team5-project\",\"source\":{\"path\":\"apps/ticket-app/overlays/dev\",\"repoURL\":\"https://github.com/CLD-05/team5-ticket-config.git\",\"targetRevision\":\"develop\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
+        },
+        "creationTimestamp": "2026-06-22T02:39:58Z",
+        "generation": 1133,
+        "name": "ticket-app-dev",
+        "namespace": "argocd",
+        "resourceVersion": "949024",
+        "uid": "043627f5-6ed2-4207-ac8c-559f0e3d7a95"
+    },
+    "operation": {
+        "initiatedBy": {
+            "automated": true
+        },
+        "retry": {
+            "limit": 5
+        },
+        "sync": {
+            "prune": true,
+            "revision": "ef8dbe4d923fcf2c79cd865ac73deed7dd21b63b",
+            "source": {
+                "path": "apps/ticket-app/overlays/dev",
+                "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                "targetRevision": "develop"
+            },
+            "syncOptions": [
+                "CreateNamespace=true"
+            ]
+        }
+    },
+    "spec": {
+        "destination": {
+            "namespace": "ticketing",
+            "server": "https://kubernetes.default.svc"
+        },
+        "ignoreDifferences": [
+            {
+                "group": "apps",
+                "jsonPointers": [
+                    "/spec/replicas"
+                ],
+                "kind": "Deployment",
+                "name": "booking-worker"
+            },
+            {
+                "group": "apps",
+                "jsonPointers": [
+                    "/spec/replicas"
+                ],
+                "kind": "Deployment",
+                "name": "ticket-service"
+            }
+        ],
+        "project": "team5-project",
+        "source": {
+            "path": "apps/ticket-app/overlays/dev",
+            "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+            "targetRevision": "develop"
+        },
+        "syncPolicy": {
+            "automated": {
+                "prune": true,
+                "selfHeal": true
+            },
+            "syncOptions": [
+                "CreateNamespace=true"
+            ]
+        }
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-06-25T02:19:00Z",
+                "message": "PrometheusRule/booking-slo is part of applications argocd/ticket-app-dev and system-addons-dev",
+                "type": "SharedResourceWarning"
+            }
+        ],
+        "controllerNamespace": "argocd",
+        "health": {
+            "lastTransitionTime": "2026-06-24T08:28:28Z",
+            "status": "Degraded"
+        },
+        "history": [
+            {
+                "deployStartedAt": "2026-06-22T04:39:54Z",
+                "deployedAt": "2026-06-22T04:39:56Z",
+                "id": 2,
+                "initiatedBy": {
+                    "automated": true
+                },
+                "revision": "23c54c988756e561d12fc8296f3792458cbc7e06",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            {
+                "deployStartedAt": "2026-06-22T07:22:03Z",
+                "deployedAt": "2026-06-22T07:22:04Z",
+                "id": 3,
+                "initiatedBy": {
+                    "automated": true
+                },
+                "revision": "0a3cbbf39b3d519d6154c07464fec8ac8704f87d",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            {
+                "deployStartedAt": "2026-06-22T08:27:13Z",
+                "deployedAt": "2026-06-22T08:27:15Z",
+                "id": 4,
+                "initiatedBy": {
+                    "automated": true
+                },
+                "revision": "9edf58aad33675e0668299ec5ad0a0c13219b6ab",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            {
+                "deployStartedAt": "2026-06-23T01:50:34Z",
+                "deployedAt": "2026-06-23T01:50:35Z",
+                "id": 5,
+                "initiatedBy": {
+                    "automated": true
+                },
+                "revision": "f7d2a513330310dbc9fc1691e48d4dee630954e0",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            {
+                "deployStartedAt": "2026-06-23T01:54:46Z",
+                "deployedAt": "2026-06-23T01:54:47Z",
+                "id": 6,
+                "initiatedBy": {
+                    "automated": true
+                },
+                "revision": "dcc6d100e4d3b39bc6ecf40c2b09479e2a5ac4bc",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            {
+                "deployStartedAt": "2026-06-23T02:47:08Z",
+                "deployedAt": "2026-06-23T02:47:09Z",
+                "id": 7,
+                "initiatedBy": {
+                    "automated": true
+                },
+                "revision": "f7d2a513330310dbc9fc1691e48d4dee630954e0",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            {
+                "deployStartedAt": "2026-06-23T02:52:25Z",
+                "deployedAt": "2026-06-23T02:52:27Z",
+                "id": 8,
+                "initiatedBy": {
+                    "automated": true
+                },
+                "revision": "258ec44fc5007767bf6de2b198c4acf6b8e4dd12",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            {
+                "deployStartedAt": "2026-06-23T05:47:06Z",
+                "deployedAt": "2026-06-23T05:47:07Z",
+                "id": 9,
+                "initiatedBy": {
+                    "automated": true
+                },
+                "revision": "c663f72b89460f33943f7c1618bde6d72c27f114",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            {
+                "deployStartedAt": "2026-06-23T07:16:12Z",
+                "deployedAt": "2026-06-23T07:16:15Z",
+                "id": 10,
+                "initiatedBy": {
+                    "username": "admin"
+                },
+                "revision": "d2ea070cb320620ffba6926987402fb4c0bc720e",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            {
+                "deployStartedAt": "2026-06-24T01:49:01Z",
+                "deployedAt": "2026-06-24T01:54:22Z",
+                "id": 11,
+                "initiatedBy": {
+                    "automated": true
+                },
+                "revision": "d41ceac10168dd1e2ef4349ad08a7c37f4e09880",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            }
+        ],
+        "operationState": {
+            "message": "waiting for completion of hook batch/Job/ticket-db-init",
+            "operation": {
+                "initiatedBy": {
+                    "automated": true
+                },
+                "retry": {
+                    "limit": 5
+                },
+                "sync": {
+                    "prune": true,
+                    "revision": "ef8dbe4d923fcf2c79cd865ac73deed7dd21b63b",
+                    "source": {
+                        "path": "apps/ticket-app/overlays/dev",
+                        "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                        "targetRevision": "develop"
+                    },
+                    "syncOptions": [
+                        "CreateNamespace=true"
+                    ]
+                }
+            },
+            "phase": "Running",
+            "startedAt": "2026-06-25T02:18:55Z",
+            "syncResult": {
+                "resources": [
+                    {
+                        "group": "",
+                        "hookPhase": "Succeeded",
+                        "kind": "ServiceAccount",
+                        "message": "serviceaccount/ticket-service unchanged",
+                        "name": "ticket-service",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "",
+                        "hookPhase": "Succeeded",
+                        "kind": "Service",
+                        "message": "service/team5-dev-booking-worker unchanged",
+                        "name": "team5-dev-booking-worker",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "",
+                        "hookPhase": "Succeeded",
+                        "kind": "Service",
+                        "message": "service/ticket-service unchanged",
+                        "name": "ticket-service",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "apps",
+                        "hookPhase": "Succeeded",
+                        "images": [
+                            "194722398200.dkr.ecr.ap-northeast-2.amazonaws.com/team5-dev-app:dev-ee07432"
+                        ],
+                        "kind": "Deployment",
+                        "message": "deployment.apps/booking-worker unchanged",
+                        "name": "booking-worker",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "apps",
+                        "hookPhase": "Succeeded",
+                        "images": [
+                            "194722398200.dkr.ecr.ap-northeast-2.amazonaws.com/team5-dev-app:dev-ee07432"
+                        ],
+                        "kind": "Deployment",
+                        "message": "deployment.apps/ticket-service configured",
+                        "name": "ticket-service",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "autoscaling",
+                        "hookPhase": "Succeeded",
+                        "kind": "HorizontalPodAutoscaler",
+                        "message": "recommended size matches current size",
+                        "name": "ticket-service-hpa",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v2"
+                    },
+                    {
+                        "group": "batch",
+                        "hookPhase": "Running",
+                        "hookType": "Sync",
+                        "images": [
+                            "194722398200.dkr.ecr.ap-northeast-2.amazonaws.com/team5-dev-app:dev-ee07432"
+                        ],
+                        "kind": "Job",
+                        "message": "job.batch/ticket-db-init created",
+                        "name": "ticket-db-init",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "gateway.networking.k8s.io",
+                        "hookPhase": "Failed",
+                        "kind": "GatewayClass",
+                        "message": "error when patching \"/dev/shm/3647390861\": GatewayClass.gateway.networking.k8s.io \"alb\" is invalid: spec.controllerName: Invalid value: \"ingress.k8s.aws/alb\": Value is immutable",
+                        "name": "alb",
+                        "namespace": "ticketing",
+                        "status": "SyncFailed",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "monitoring.coreos.com",
+                        "hookPhase": "Succeeded",
+                        "kind": "ServiceMonitor",
+                        "message": "servicemonitor.monitoring.coreos.com/booking unchanged",
+                        "name": "booking",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "monitoring.coreos.com",
+                        "hookPhase": "Succeeded",
+                        "kind": "PrometheusRule",
+                        "message": "prometheusrule.monitoring.coreos.com/booking-slo configured",
+                        "name": "booking-slo",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "keda.sh",
+                        "hookPhase": "Succeeded",
+                        "kind": "ScaledObject",
+                        "message": "ScaledObject is defined correctly and is ready for scaling",
+                        "name": "booking-worker",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1alpha1"
+                    },
+                    {
+                        "group": "external-secrets.io",
+                        "hookPhase": "Succeeded",
+                        "kind": "ExternalSecret",
+                        "message": "secret synced",
+                        "name": "ticket-app-secret",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "gateway.networking.k8s.io",
+                        "hookPhase": "Succeeded",
+                        "kind": "Gateway",
+                        "message": "Gateway is healthy",
+                        "name": "ticket-gateway",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "gateway.networking.k8s.io",
+                        "hookPhase": "Failed",
+                        "kind": "HTTPRoute",
+                        "message": "Parent ticket-gateway: Unable to find service port for port 8080",
+                        "name": "ticket-route",
+                        "namespace": "ticketing",
+                        "status": "Synced",
+                        "syncPhase": "Sync",
+                        "version": "v1"
+                    }
+                ],
+                "revision": "ef8dbe4d923fcf2c79cd865ac73deed7dd21b63b",
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            }
+        },
+        "reconciledAt": "2026-06-25T02:21:26Z",
+        "resourceHealthSource": "appTree",
+        "resources": [
+            {
+                "kind": "Service",
+                "name": "team5-dev-booking-worker",
+                "namespace": "ticketing",
+                "status": "Synced",
+                "version": "v1"
+            },
+            {
+                "kind": "Service",
+                "name": "ticket-service",
+                "namespace": "ticketing",
+                "status": "Synced",
+                "version": "v1"
+            },
+            {
+                "kind": "ServiceAccount",
+                "name": "ticket-service",
+                "namespace": "ticketing",
+                "status": "Synced",
+                "version": "v1"
+            },
+            {
+                "group": "apps",
+                "kind": "Deployment",
+                "name": "booking-worker",
+                "namespace": "ticketing",
+                "status": "OutOfSync",
+                "version": "v1"
+            },
+            {
+                "group": "apps",
+                "kind": "Deployment",
+                "name": "ticket-service",
+                "namespace": "ticketing",
+                "status": "OutOfSync",
+                "version": "v1"
+            },
+            {
+                "group": "autoscaling",
+                "kind": "HorizontalPodAutoscaler",
+                "name": "ticket-service-hpa",
+                "namespace": "ticketing",
+                "status": "Synced",
+                "version": "v2"
+            },
+            {
+                "group": "batch",
+                "hook": true,
+                "kind": "Job",
+                "name": "ticket-db-init",
+                "namespace": "ticketing",
+                "requiresPruning": true,
+                "version": "v1"
+            },
+            {
+                "group": "external-secrets.io",
+                "kind": "ExternalSecret",
+                "name": "ticket-app-secret",
+                "namespace": "ticketing",
+                "status": "Synced",
+                "version": "v1"
+            },
+            {
+                "group": "gateway.networking.k8s.io",
+                "kind": "Gateway",
+                "name": "ticket-gateway",
+                "namespace": "ticketing",
+                "status": "Synced",
+                "version": "v1"
+            },
+            {
+                "group": "gateway.networking.k8s.io",
+                "kind": "GatewayClass",
+                "name": "alb",
+                "status": "OutOfSync",
+                "version": "v1"
+            },
+            {
+                "group": "gateway.networking.k8s.io",
+                "kind": "HTTPRoute",
+                "name": "ticket-route",
+                "namespace": "ticketing",
+                "status": "OutOfSync",
+                "version": "v1"
+            },
+            {
+                "group": "keda.sh",
+                "kind": "ScaledObject",
+                "name": "booking-worker",
+                "namespace": "ticketing",
+                "status": "OutOfSync",
+                "version": "v1alpha1"
+            },
+            {
+                "group": "monitoring.coreos.com",
+                "kind": "PrometheusRule",
+                "name": "booking-slo",
+                "namespace": "ticketing",
+                "status": "OutOfSync",
+                "version": "v1"
+            },
+            {
+                "group": "monitoring.coreos.com",
+                "kind": "ServiceMonitor",
+                "name": "booking",
+                "namespace": "ticketing",
+                "status": "Synced",
+                "version": "v1"
+            }
+        ],
+        "sourceHydrator": {},
+        "sourceType": "Kustomize",
+        "summary": {
+            "images": [
+                "194722398200.dkr.ecr.ap-northeast-2.amazonaws.com/team5-dev-app:dev-ee07432"
+            ]
+        },
+        "sync": {
+            "comparedTo": {
+                "destination": {
+                    "namespace": "ticketing",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "ignoreDifferences": [
+                    {
+                        "group": "apps",
+                        "jsonPointers": [
+                            "/spec/replicas"
+                        ],
+                        "kind": "Deployment",
+                        "name": "booking-worker"
+                    },
+                    {
+                        "group": "apps",
+                        "jsonPointers": [
+                            "/spec/replicas"
+                        ],
+                        "kind": "Deployment",
+                        "name": "ticket-service"
+                    }
+                ],
+                "source": {
+                    "path": "apps/ticket-app/overlays/dev",
+                    "repoURL": "https://github.com/CLD-05/team5-ticket-config.git",
+                    "targetRevision": "develop"
+                }
+            },
+            "revision": "72e65fad8db923b7bf9cfa24af6775655a4e4123",
+            "status": "OutOfSync"
+        }
+    }
+}

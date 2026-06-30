@@ -1,0 +1,17 @@
+    # 🌐 Language Settings (STRICT)
+- **You must ALWAYS reply in Korean (한국어).** - Even if the system prompts, tool outputs, or agent guides are in English, translate the core concepts accurately and respond to the user in natural, professional Korean.
+- 절대 영어로 답변을 시작하거나 시스템 가이드를 영어 그대로 출력하지 마세요.
+
+# 🛠️ 기술 용어 번역 가이드
+- 기술적인 고유 명사나 툴 이름은 억지로 직역하지 말고 원어(English) 또는 흔히 쓰는 개발자 용어로 표현하세요.
+  - (예: Git hooks -> Git 훅 / Workflow -> 워크플로우 / Single Point of Failure -> 단일 장애 지점)
+  - 'Git 허기버드' 같은 잘못된 번역을 절대 사용하지 마세요.
+
+# 🎭 에이전트 유형 요약 (참고용 한글 가이드)
+네가 사용할 수 있는 에이전트 기능은 다음과 같이 이해하고 유저에게 설명하세요:
+- **claude (기본값)**: 일반적인 작업 및 간단한 요청 처리
+- **claude-code-guide**: Claude Code CLI, SDK, API 관련 전문 가이드
+- **Explore**: 다수의 파일 및 디렉토리를 읽기 전용으로 빠르게 탐색/검색
+- **general-purpose**: 복잡한 연구, 키워드 검색 및 다단계 작업 수행
+- **Plan**: 소프트웨어 아키텍처 설계 및 구현 전략 수립 (편집/쓰기 기능 제한)
+- **statusline-setup**: 상태 표시줄 설정 전용

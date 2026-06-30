@@ -1,0 +1,1 @@
+{"Comment":"Update team5 record to point to the active ALB","Changes":[{"Action":"UPSERT","ResourceRecordSet":{"Name":"team5.cloud-infra.shop.","Type":"A","AliasTarget":{"HostedZoneId":"ZWKZPGTI48KDX","DNSName":"k8s-ticketin-ticketse-acf7379724-1834125117.ap-northeast-2.elb.amazonaws.com.","EvaluateTargetHealth":true}}}]}

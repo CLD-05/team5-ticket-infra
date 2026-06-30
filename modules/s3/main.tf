@@ -98,30 +98,33 @@ resource "aws_s3_bucket_policy" "poster_bucket" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = var.enable_cloudfront ? [
-      {
-        Sid    = "AllowCloudFrontReadPosters"
-        Effect = "Allow"
-        Principal = {
-          Service = "cloudfront.amazonaws.com"
-        }
-        Action   = "s3:GetObject"
-        Resource = "${aws_s3_bucket.poster_bucket.arn}/posters/*"
-        Condition = {
-          StringEquals = {
-            "AWS:SourceArn" = aws_cloudfront_distribution.poster_bucket[0].arn
+    Statement = concat(
+      var.enable_cloudfront ? [
+        {
+          Sid    = "AllowCloudFrontReadPosters"
+          Effect = "Allow"
+          Principal = {
+            Service = "cloudfront.amazonaws.com"
+          }
+          Action   = "s3:GetObject"
+          Resource = "${aws_s3_bucket.poster_bucket.arn}/posters/*"
+          Condition = {
+            StringEquals = {
+              "AWS:SourceArn" = aws_cloudfront_distribution.poster_bucket[0].arn
+            }
           }
         }
-      }
-      ] : [
-      {
-        Sid       = "AllowPublicReadPosters"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.poster_bucket.arn}/posters/*"
-      }
-    ]
+      ] : [],
+      !var.enable_cloudfront ? [
+        {
+          Sid       = "AllowPublicReadPosters"
+          Effect    = "Allow"
+          Principal = "*"
+          Action    = "s3:GetObject"
+          Resource  = "${aws_s3_bucket.poster_bucket.arn}/posters/*"
+        }
+      ] : []
+    )
   })
 }
 
