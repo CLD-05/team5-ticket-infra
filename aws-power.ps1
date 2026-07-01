@@ -1,74 +1,105 @@
-param (
+﻿param (
     [Parameter(Mandatory=$true)]
     [ValidateSet("start","stop")]
     [string]$Action
 )
 
-# =============================================
-# 현재 환경 실제 리소스 ID (2026-06-29 기준)
-# =============================================
+# Resource IDs verified 2026-06-30
+# prod RDS: MultiAZ=True + StorageEncrypted=True -> CLI stop blocked by AWS
+# dev RDS: SingleAZ + StorageEncrypted=True -> CLI stop/start OK
+
 $bastionInstanceIds = @(
-    "i-0bb965dd58ce00ed8",   # team5-dev-bastion
-    "i-0b50d25628e09256d"    # team5-prod-bastion
+    "i-09ad9bbb025cb1622",   # team5-dev-bastion
+    "i-0b43ea7a1ce278ee3"    # team5-prod-bastion
 )
-# replica는 수동 start/stop 불가 (Primary 상태에 따라 자동 관리됨)
-$rdsIdentifiers = @("team5-dev-rds", "team5-prod-rds")
+$rdsDevIds  = @("team5-dev-rds")
+$rdsProdIds = @("team5-prod-rds", "team5-prod-rds-replica")
 
 if ($Action -eq "stop") {
-    Write-Host "========== [STOP] 순서: APP -> BASTION -> DB ==========" -ForegroundColor Yellow
+    Write-Host "=== [STOP] APP -> BASTION -> DB ===" -ForegroundColor Yellow
 
-    # 1. App 먼저 죽여서 DB 커넥션부터 해제
-    Write-Host "1. EKS Node Groups 스케일 다운..." -ForegroundColor Cyan
+    Write-Host "1. EKS scale down..." -ForegroundColor Cyan
     aws eks update-nodegroup-config --cluster-name team5-dev-eks  --nodegroup-name team5-dev-eks-app-ng  --scaling-config minSize=0,maxSize=1,desiredSize=0
     aws eks update-nodegroup-config --cluster-name team5-prod-eks --nodegroup-name team5-prod-eks-app-ng --scaling-config minSize=0,maxSize=1,desiredSize=0
 
-    # 2. Bastion 정지
-    Write-Host "2. Bastion 인스턴스 정지..." -ForegroundColor Cyan
+    Write-Host "2. Stopping Bastion instances..." -ForegroundColor Cyan
     aws ec2 stop-instances --instance-ids $bastionInstanceIds
-
-    # 3. Replica 먼저 정지 (Primary보다 먼저)
-    Write-Host "3. RDS Replica 정지..." -ForegroundColor Cyan
-    aws rds stop-db-instance --db-instance-identifier $rdsReplicaIdentifier
-
-    # 4. Primary DB 정지
-    Write-Host "4. RDS Primary 정지..." -ForegroundColor Cyan
-    foreach ($rds in $rdsIdentifiers) {
-        aws rds stop-db-instance --db-instance-identifier $rds
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "   [WARN] IAM denied. Stop Bastions manually:" -ForegroundColor Yellow
+        Write-Host "     dev-bastion:  i-09ad9bbb025cb1622" -ForegroundColor Yellow
+        Write-Host "     prod-bastion: i-0b43ea7a1ce278ee3" -ForegroundColor Yellow
+    } else {
+        Write-Host "   Bastion stop OK" -ForegroundColor Green
     }
 
-    Write-Host "-> 모든 자원 안전하게 정지 완료!" -ForegroundColor Green
-}
-elseif ($Action -eq "start") {
-    Write-Host "========== [START] 순서: DB(대기) -> BASTION -> APP ==========" -ForegroundColor Yellow
-
-    # 1. Primary DB 시작 (이미 running이면 건너뜀)
-    Write-Host "1. RDS Primary 인스턴스 시작 요청..." -ForegroundColor Cyan
-    foreach ($rds in $rdsIdentifiers) {
-        $state = (aws rds describe-db-instances --db-instance-identifier $rds --query "DBInstances[0].DBInstanceStatus" --output text 2>$null)
-        if ($state -eq "stopped") {
-            Write-Host "   -> $rds 시작 중..." -ForegroundColor Gray
-            aws rds start-db-instance --db-instance-identifier $rds | Out-Null
+    Write-Host "3. Stopping dev RDS..." -ForegroundColor Cyan
+    foreach ($rds in $rdsDevIds) {
+        $st = (aws rds describe-db-instances --db-instance-identifier $rds --query "DBInstances[0].DBInstanceStatus" --output text 2>$null)
+        if ($st -eq "available") {
+            Write-Host "   $rds stop requested" -ForegroundColor Gray
+            aws rds stop-db-instance --db-instance-identifier $rds | Out-Null
+            Write-Host "   $rds stop OK" -ForegroundColor Green
         } else {
-            Write-Host "   -> $rds 이미 $state 상태, 건너뜀" -ForegroundColor Gray
+            Write-Host "   $rds is $st, skipping" -ForegroundColor Gray
         }
     }
 
-    # [핵심] Primary RDS가 완전히 켜질 때까지 대기
-    Write-Host "-> Primary DB 가동 대기 중 (수 분 소요)..." -ForegroundColor Gray
-    foreach ($rds in $rdsIdentifiers) {
-        aws rds wait db-instance-available --db-instance-identifier $rds
+    Write-Host ""
+    Write-Host "   [INFO] prod RDS MultiAZ+Encrypted: CLI stop blocked by AWS." -ForegroundColor Yellow
+    foreach ($rds in $rdsProdIds) {
+        $st = (aws rds describe-db-instances --db-instance-identifier $rds --query "DBInstances[0].DBInstanceStatus" --output text 2>$null)
+        Write-Host "     $rds -> $st" -ForegroundColor Yellow
     }
-    Write-Host "-> 모든 Primary DB가 사용 가능한 상태입니다!" -ForegroundColor Green
-    # ※ Replica는 Primary 가동 후 AWS가 자동으로 복구함 (수동 start 불필요)
+    Write-Host "   To stop: AWS Console > RDS > select instance > Stop." -ForegroundColor Yellow
 
-    # 2. Bastion 인스턴스 시작...
-    Write-Host "2. Bastion 인스턴스 시작..." -ForegroundColor Cyan
+    Write-Host "4. Waiting for dev RDS to stop..." -ForegroundColor Cyan
+    foreach ($rds in $rdsDevIds) {
+        do {
+            Start-Sleep -Seconds 15
+            $st = (aws rds describe-db-instances --db-instance-identifier $rds --query "DBInstances[0].DBInstanceStatus" --output text 2>$null)
+            Write-Host "   $rds -> $st" -ForegroundColor Gray
+        } while ($st -ne "stopped")
+        Write-Host "   $rds stopped" -ForegroundColor Green
+    }
+
+    Write-Host "=== STOP done. prod RDS needs manual action in Console. ===" -ForegroundColor Yellow
+}
+elseif ($Action -eq "start") {
+    Write-Host "=== [START] DB -> BASTION -> APP ===" -ForegroundColor Yellow
+
+    Write-Host "1. Starting dev RDS..." -ForegroundColor Cyan
+    foreach ($rds in $rdsDevIds) {
+        $st = (aws rds describe-db-instances --db-instance-identifier $rds --query "DBInstances[0].DBInstanceStatus" --output text 2>$null)
+        if ($st -eq "stopped") {
+            aws rds start-db-instance --db-instance-identifier $rds | Out-Null
+            Write-Host "   $rds start requested" -ForegroundColor Gray
+        } else {
+            Write-Host "   $rds is $st, skipping" -ForegroundColor Gray
+        }
+    }
+    foreach ($rds in $rdsProdIds) {
+        $st = (aws rds describe-db-instances --db-instance-identifier $rds --query "DBInstances[0].DBInstanceStatus" --output text 2>$null)
+        Write-Host "   $rds -> $st (prod: always managed by AWS)" -ForegroundColor Gray
+    }
+    Write-Host "   Waiting for dev RDS available..." -ForegroundColor Gray
+    foreach ($rds in $rdsDevIds) {
+        aws rds wait db-instance-available --db-instance-identifier $rds
+        Write-Host "   $rds available" -ForegroundColor Green
+    }
+
+    Write-Host "2. Starting Bastion instances..." -ForegroundColor Cyan
     aws ec2 start-instances --instance-ids $bastionInstanceIds
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "   [WARN] IAM denied. Start Bastions manually:" -ForegroundColor Yellow
+        Write-Host "     dev-bastion:  i-09ad9bbb025cb1622" -ForegroundColor Yellow
+        Write-Host "     prod-bastion: i-0b43ea7a1ce278ee3" -ForegroundColor Yellow
+    } else {
+        Write-Host "   Bastion start OK" -ForegroundColor Green
+    }
 
-    # 3. EKS 노드 그룹 원상복구 (DB가 뜬 뒤에만 실행됨)
-    Write-Host "3. EKS Node Groups 스케일 업..." -ForegroundColor Cyan
-    aws eks update-nodegroup-config --cluster-name team5-dev-eks  --nodegroup-name team5-dev-eks-app-ng  --scaling-config minSize=1,maxSize=3,desiredSize=2
+    Write-Host "3. EKS scale up..." -ForegroundColor Cyan
+    aws eks update-nodegroup-config --cluster-name team5-dev-eks  --nodegroup-name team5-dev-eks-app-ng  --scaling-config minSize=1,maxSize=5,desiredSize=2
     aws eks update-nodegroup-config --cluster-name team5-prod-eks --nodegroup-name team5-prod-eks-app-ng --scaling-config minSize=3,maxSize=8,desiredSize=3
 
-    Write-Host "========== 모든 인프라 정상 재가동 완료! ==========" -ForegroundColor Yellow
+    Write-Host "=== All infra started. ===" -ForegroundColor Yellow
 }

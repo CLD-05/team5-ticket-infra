@@ -1,1 +1,17 @@
-{"Comment":"Update team5 record to point to the active ALB","Changes":[{"Action":"UPSERT","ResourceRecordSet":{"Name":"team5.cloud-infra.shop.","Type":"A","AliasTarget":{"HostedZoneId":"ZWKZPGTI48KDX","DNSName":"k8s-ticketin-ticketse-acf7379724-1834125117.ap-northeast-2.elb.amazonaws.com.","EvaluateTargetHealth":true}}}]}
+{
+  "Comment": "Update team5 record to point to dev ALB",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "team5.cloud-infra.shop.",
+        "Type": "A",
+        "AliasTarget": {
+          "HostedZoneId": "ZWKZPGTI48KDX",
+          "DNSName": "k8s-ticketin-ticketga-9ffb0939a5-1981623470.ap-northeast-2.elb.amazonaws.com.",
+          "EvaluateTargetHealth": false
+        }
+      }
+    }
+  ]
+}
