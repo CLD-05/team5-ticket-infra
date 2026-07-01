@@ -3,24 +3,21 @@ name: Terraform CI/CD
 on:
   workflow_dispatch:
 
-  # main branch migration 중 Terraform 자동 실행을 막기 위해 임시 비활성화.
-  # 필요 시 아래 pull_request / push trigger를 다시 활성화.
-  #
-  # pull_request:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - "envs/**"
-  #     - "modules/**"
-  #     - ".github/workflows/terraform.yml"
-  #
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - "envs/**"
-  #     - "modules/**"
-  #     - ".github/workflows/terraform.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "envs/**"
+      - "modules/**"
+      - ".github/workflows/terraform.yml"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "envs/**"
+      - "modules/**"
+      - ".github/workflows/terraform.yml"
 
 env:
   AWS_REGION: ap-northeast-2
