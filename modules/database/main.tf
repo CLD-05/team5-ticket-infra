@@ -284,6 +284,9 @@ resource "aws_db_instance" "replica" {
 
   skip_final_snapshot = true
 
+  storage_encrypted = true
+  kms_key_id        = aws_kms_key.rds.arn
+
   tags = {
     Name        = "team5-${var.environment}-rds-replica"
     Team        = "team5"
