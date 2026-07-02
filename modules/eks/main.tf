@@ -11,6 +11,9 @@ module "eks" {
   cluster_version = "1.35"
 
   iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+  kms_key_administrators = [
+    "arn:aws:iam::194722398200:user/team5-ljh"
+  ]
 
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
@@ -50,8 +53,8 @@ module "eks" {
       name            = "team5-${var.environment}-eks-app-ng"
       use_name_prefix = false
 
-      ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = var.node_instance_types
+      ami_type                   = "AL2023_x86_64_STANDARD"
+      instance_types             = var.node_instance_types
       max_pods                   = 110
       enable_bootstrap_user_data = true
 
@@ -144,4 +147,3 @@ resource "aws_security_group_rule" "eks_api_bastion" {
   source_security_group_id = var.bastion_sg_id
   description              = "Allow Bastion host to communicate with EKS API server"
 }
-
