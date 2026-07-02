@@ -44,6 +44,11 @@ terraform.rc
 # planout.claude/settings.local*
 
 # Ignore Claude Code local settings and AWS parameter files (should not be shared)
-.claude/settings.local*
-settings.local copy.json
+.claude/
+
+# Ignore temp infra scripts and status json files
+change-dns.json
+check_infra.sh
+refresh.ps1
+status*.json
 parameters.json

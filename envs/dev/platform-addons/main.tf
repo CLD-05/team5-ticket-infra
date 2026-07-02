@@ -105,4 +105,10 @@ resource "kubernetes_storage_class" "gp3" {
     type      = "gp3"
     encrypted = "true"
   }
+
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations["argocd.argoproj.io/tracking-id"]
+    ]
+  }
 }
