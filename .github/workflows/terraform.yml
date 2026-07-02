@@ -41,15 +41,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       dev_infra: ${{ steps.filter.outputs.dev_infra }}
-      dev_platform_addons: ${{ steps.filter.outputs.dev_platform_addons }}
       prod_infra: ${{ steps.filter.outputs.prod_infra }}
-      prod_platform_addons: ${{ steps.filter.outputs.prod_platform_addons }}
       modules: ${{ steps.filter.outputs.modules }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # env별 infra/platform-addons 및 공통 modules 변경 여부 계산
+      # env별 infra 및 공통 modules 변경 여부 계산
       - name: Detect changed Terraform layers
         id: filter
         uses: dorny/paths-filter@v3
@@ -57,12 +55,8 @@ jobs:
           filters: |
             dev_infra:
               - 'envs/dev/infra/**'
-            dev_platform_addons:
-              - 'envs/dev/platform-addons/**'
             prod_infra:
               - 'envs/prod/infra/**'
-            prod_platform_addons:
-              - 'envs/prod/platform-addons/**'
             modules:
               - 'modules/**'
 
@@ -80,18 +74,10 @@ jobs:
             environment: dev
             working_directory: envs/dev/infra
             changed_output: dev_infra
-          - name: dev/platform-addons
-            environment: dev
-            working_directory: envs/dev/platform-addons
-            changed_output: dev_platform_addons
           - name: prod/infra
             environment: prod
             working_directory: envs/prod/infra
             changed_output: prod_infra
-          - name: prod/platform-addons
-            environment: prod
-            working_directory: envs/prod/platform-addons
-            changed_output: prod_platform_addons
     defaults:
       run:
         working-directory: ${{ matrix.working_directory }}
@@ -261,10 +247,6 @@ jobs:
             environment: dev
             working_directory: envs/dev/infra
             changed_output: dev_infra
-          - name: dev/platform-addons
-            environment: dev
-            working_directory: envs/dev/platform-addons
-            changed_output: dev_platform_addons
     defaults:
       run:
         working-directory: ${{ matrix.working_directory }}
@@ -339,10 +321,6 @@ jobs:
             environment: prod
             working_directory: envs/prod/infra
             changed_output: prod_infra
-          - name: prod/platform-addons
-            environment: prod
-            working_directory: envs/prod/platform-addons
-            changed_output: prod_platform_addons
     defaults:
       run:
         working-directory: ${{ matrix.working_directory }}
