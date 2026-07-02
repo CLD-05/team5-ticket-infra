@@ -52,3 +52,4 @@ check_infra.sh
 refresh.ps1
 status*.json
 parameters.json
+aws-power.ps1
