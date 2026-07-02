@@ -59,9 +59,8 @@ module "eks" {
       min_size     = var.node_min_size
       max_size     = var.node_max_size
 
-      iam_role_name                 = "team5-${var.environment}-node-group"
-      iam_role_use_name_prefix      = false
-      iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+      create_iam_role               = false
+      iam_role_arn                  = "arn:aws:iam::194722398200:role/team5-${var.environment}-node-group"
 
       block_device_mappings = {
         xvda = {
@@ -103,9 +102,8 @@ module "eks" {
       min_size     = 0
       max_size     = 10
 
-      iam_role_name                 = "team5-${var.environment}-node-group"
-      iam_role_use_name_prefix      = false
-      iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+      create_iam_role               = false
+      iam_role_arn                  = "arn:aws:iam::194722398200:role/team5-${var.environment}-node-group"
 
       block_device_mappings = {
         xvda = {
