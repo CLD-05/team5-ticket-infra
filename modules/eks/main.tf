@@ -12,8 +12,7 @@ module "eks" {
 
   iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
   kms_key_administrators = [
-    "arn:aws:iam::194722398200:user/team5-ljh",
-    "arn:aws:iam::194722398200:role/team5-gha-prod-role"
+    "arn:aws:iam::194722398200:user/team5-ljh"
   ]
 
   vpc_id     = var.vpc_id
