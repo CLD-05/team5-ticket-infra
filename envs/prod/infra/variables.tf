@@ -52,12 +52,12 @@ variable "cluster_name" {
 
 variable "node_desired_size" {
   type    = number
-  default = 3
+  default = 6
 }
 
 variable "node_min_size" {
   type    = number
-  default = 2
+  default = 4
 }
 
 variable "node_max_size" {
