@@ -62,12 +62,12 @@ variable "node_min_size" {
 
 variable "node_max_size" {
   type    = number
-  default = 10
+  default = 15
 }
 
 variable "node_instance_types" {
   type    = list(string)
-  default = ["t3.large"]
+  default = ["c6i.xlarge"]
 }
 
 # RDS Variables

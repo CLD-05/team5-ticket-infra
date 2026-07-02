@@ -84,11 +84,63 @@ module "eks" {
       }
 
       labels = {
-        role = "general"
+        role = "app"
       }
 
       tags = {
         Name        = "team5-${var.environment}-node-group"
+        Team        = "team5"
+        Environment = var.environment
+      }
+    }
+    runner = {
+      name            = "team5-${var.environment}-eks-runner-ng"
+      use_name_prefix = false
+
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = var.node_instance_types
+      max_pods                   = 110
+      enable_bootstrap_user_data = true
+
+      desired_size = 3
+      min_size     = 0
+      max_size     = 10
+
+      iam_role_name                 = "team5-${var.environment}-node-group"
+      iam_role_use_name_prefix      = false
+      iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 50
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      }
+
+      metadata_options = {
+        http_endpoint               = "enabled"
+        http_tokens                 = "required"
+        http_put_response_hop_limit = 2
+      }
+
+      labels = {
+        role = "runner"
+      }
+
+      taints = [
+        {
+          key    = "dedicated"
+          value  = "runner"
+          effect = "NO_SCHEDULE"
+        }
+      ]
+
+      tags = {
+        Name        = "team5-${var.environment}-runner-node-group"
         Team        = "team5"
         Environment = var.environment
       }
