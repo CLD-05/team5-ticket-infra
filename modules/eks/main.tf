@@ -51,13 +51,13 @@ module "eks" {
       use_name_prefix = false
 
       ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = var.node_instance_types
+      instance_types = ["t3.large"]
       max_pods                   = 110
       enable_bootstrap_user_data = true
 
-      desired_size = var.node_desired_size
-      min_size     = var.node_min_size
-      max_size     = var.node_max_size
+      desired_size = 3
+      min_size     = 3
+      max_size     = 8
 
       iam_role_name                 = "team5-${var.environment}-node-group"
       iam_role_use_name_prefix      = false
@@ -86,6 +86,49 @@ module "eks" {
 
       tags = {
         Name        = "team5-${var.environment}-node-group"
+        Team        = "team5"
+        Environment = var.environment
+      }
+    }
+    app_v2 = {
+      name            = "team5-${var.environment}-eks-app-v2-ng"
+      use_name_prefix = false
+
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = var.node_instance_types
+      max_pods                   = 110
+      enable_bootstrap_user_data = true
+
+      desired_size = var.node_desired_size
+      min_size     = var.node_min_size
+      max_size     = var.node_max_size
+
+      create_iam_role = false
+      iam_role_arn    = "arn:aws:iam::194722398200:role/team5-${var.environment}-node-group"
+
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 50
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      }
+
+      metadata_options = {
+        http_endpoint               = "enabled"
+        http_tokens                 = "required"
+        http_put_response_hop_limit = 2
+      }
+
+      labels = {
+        role = "app"
+      }
+
+      tags = {
+        Name        = "team5-${var.environment}-app-v2-node-group"
         Team        = "team5"
         Environment = var.environment
       }
