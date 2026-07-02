@@ -378,3 +378,4 @@ jobs:
       - name: Terraform apply
         if: steps.should_run.outputs.run == 'true'
         run: terraform apply -input=false -auto-approve
+# Terraform workflow refresh trigger
