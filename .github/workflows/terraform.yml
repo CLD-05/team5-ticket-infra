@@ -3,6 +3,17 @@ name: Terraform CI/CD
 on:
   # Actions 화면에서 수동 실행
   workflow_dispatch:
+    inputs:
+      apply_target:
+        description: "수동 실행 시 apply 대상 선택"
+        required: true
+        default: "plan-only"
+        type: choice
+        options:
+          - plan-only
+          - dev
+          - prod
+          - all
 
   # PR 생성/갱신 시 Terraform plan 검증
   pull_request:
@@ -43,6 +54,7 @@ jobs:
       dev_infra: ${{ steps.filter.outputs.dev_infra }}
       prod_infra: ${{ steps.filter.outputs.prod_infra }}
       modules: ${{ steps.filter.outputs.modules }}
+      workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -59,6 +71,8 @@ jobs:
               - 'envs/prod/infra/**'
             modules:
               - 'modules/**'
+            workflow:
+              - '.github/workflows/terraform.yml'
 
   # PR 또는 수동 실행 시 Terraform plan 수행
   terraform-plan:
@@ -91,8 +105,9 @@ jobs:
         run: |
           layer_changed='${{ needs.detect-changes.outputs[matrix.changed_output] }}'
           modules_changed='${{ needs.detect-changes.outputs.modules }}'
+          workflow_changed='${{ needs.detect-changes.outputs.workflow }}'
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ] || [ "$workflow_changed" = "true" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -238,7 +253,9 @@ jobs:
     name: Apply Dev (${{ matrix.name }})
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_target == 'dev' || github.event.inputs.apply_target == 'all'))
     strategy:
       fail-fast: false
       matrix:
@@ -260,8 +277,15 @@ jobs:
         run: |
           layer_changed='${{ needs.detect-changes.outputs[matrix.changed_output] }}'
           modules_changed='${{ needs.detect-changes.outputs.modules }}'
+          apply_target='${{ github.event.inputs.apply_target }}'
 
-          if [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "$apply_target" = "dev" ] || [ "$apply_target" = "all" ]; then
+              echo "run=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "run=false" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -310,7 +334,9 @@ jobs:
     name: Apply Prod (${{ matrix.name }})
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_target == 'prod' || github.event.inputs.apply_target == 'all'))
     # prod 환경 승인 게이트
     environment: prod
     strategy:
@@ -334,8 +360,15 @@ jobs:
         run: |
           layer_changed='${{ needs.detect-changes.outputs[matrix.changed_output] }}'
           modules_changed='${{ needs.detect-changes.outputs.modules }}'
+          apply_target='${{ github.event.inputs.apply_target }}'
 
-          if [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "$apply_target" = "prod" ] || [ "$apply_target" = "all" ]; then
+              echo "run=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "run=false" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -378,4 +411,3 @@ jobs:
       - name: Terraform apply
         if: steps.should_run.outputs.run == 'true'
         run: terraform apply -input=false -auto-approve
-# Terraform workflow refresh trigger
