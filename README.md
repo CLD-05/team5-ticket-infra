@@ -1,66 +1,337 @@
-# Team 5 Ticketing Platform - Infrastructure as Code (IaC)
+# Team5 Ticket Infrastructure
 
-이 저장소는 **High-Availability & Elastic Ticketing Platform**의 AWS 클라우드 인프라를 정의하는 Terraform 코드 저장소입니다.  
-폭발적인 트래픽 폭주 환경에서 고가용성과 무결성을 보장하기 위해 설계되었으며, `modules/`와 `envs/`의 재사용 가능한 구조로 설계되어 있습니다.
+## 1. Overview
+
+이 저장소는 Team5 티켓팅 플랫폼의 AWS 인프라를 Terraform으로 관리하는 IaC 저장소입니다.
+
+티켓팅 서비스는 특정 시간에 트래픽이 급격히 몰리는 특성이 있으므로, 단순한 서버 배포가 아니라 트래픽 완충, 비동기 처리, 데이터 정합성, 오토스케일링, 운영 관측성을 함께 고려해야 합니다.
+
+이를 위해 본 인프라는 아래 목표를 기준으로 설계했습니다.
+
+### 주요 목표
+
+- EKS 기반 애플리케이션 실행 환경 구성
+- RDS, Redis, SQS를 활용한 예매 처리 안정성 확보
+- dev/prod 환경 분리
+- Terraform 기반 인프라 형상 관리
+- GitHub Actions OIDC 기반 Terraform CI/CD 구성
+- ArgoCD 기반 GitOps 배포 구조 지원
+- 운영 환경 기준 고가용성, 보안, 관측성 확장 가능 구조 확보
 
 ---
 
-## 📂 프로젝트 구조 (Directory Structure)
+## 2. Architecture
 
+전체 구조는 AWS 위에 EKS를 중심으로 구성되어 있습니다.
+
+```text
+(아키텍처 이미지 첨부 예정)
 ```
+
+### 핵심 설계 방향
+
+- Web API Pod와 Booking Worker Pod를 분리하여 요청 처리와 예매 확정 처리를 분리
+- SQS를 통해 예매 확정 요청을 비동기 처리하여 DB 부하 완화
+- Redis를 사용해 대기열, 좌석 선점, 동시성 제어를 처리
+- RDS Proxy를 통해 DB Connection Pool 압박 완화
+- Secrets Manager와 External Secrets Operator를 사용해 애플리케이션 설정을 Kubernetes Secret으로 동기화
+- ArgoCD를 통해 Kubernetes Manifest를 GitOps 방식으로 적용
+- prod 환경은 3AZ, Multi NAT, Multi-AZ RDS/Redis 기반으로 고가용성 방향 적용
+
+---
+
+## 3. Repository Structure
+
+```text
 team5-ticket-infra/
-├── bootstrap-backend/      # S3 State Bucket & DynamoDB Lock Table 생성 (최초 1회 실행)
-├── modules/                # 재사용 가능한 테라폼 인프라 모듈
-│   ├── network/            # VPC, 3-Tier Subnets, IGW, NAT Gateways, Routing Tables
-│   ├── bastion/            # SSM-only EC2 Bastion Host (IMDSv2 적용)
-│   ├── eks/                # EKS Cluster, Node Group, IAM Role
-│   ├── database/           # RDS MySQL (Multi-AZ, Read Replica)
-│   ├── elasticache/        # ElastiCache Redis Cluster
-│   └── ...
-└── envs/                   # 환경별(Dev / Prod) 실행 래퍼 테라폼 구성
+├── bootstrap-backend/
+│   └── Terraform state backend용 S3 bucket 생성
+│
+├── modules/
+│   ├── network/        # VPC, Subnet, NAT, Routing
+│   ├── bastion/        # SSM Bastion
+│   ├── eks/            # EKS Cluster, Node Group, IRSA
+│   ├── database/       # RDS MySQL, RDS Proxy, Read Replica
+│   ├── elasticache/    # Redis
+│   ├── sqs/            # Booking Queue, DLQ
+│   ├── ecr/            # ECR Repository
+│   ├── secrets/        # Secrets Manager
+│   ├── s3/             # Poster Image Bucket, CloudFront
+│   ├── monitoring/     # KEDA / YACE / Cluster Autoscaler IAM
+│   ├── waf/            # AWS WAF
+│   └── github_oidc/    # GitHub Actions OIDC Role
+│
+└── envs/
     ├── dev/
-    │   ├── infra/          # dev 환경 AWS 리소스 프로비저닝 (VPC, EKS, RDS, Redis 등)
-    │   └── platform-addons/# dev 환경 K8s 애드온 구성 (ALB Controller, KEDA, ESO 등)
+    │   ├── infra/
+    │   └── platform-addons/
+    │
     └── prod/
-        ├── infra/          # prod 환경 AWS 리소스 프로비저닝
-        └── platform-addons/# prod 환경 K8s 애드온 구성
+        ├── infra/
+        └── platform-addons/
+```
+
+Repository는 `modules`와 `envs`로 분리되어 관리됩니다.
+
+| Directory | Description |
+|-----------|-------------|
+| `modules` | 재사용 가능한 Terraform Module |
+| `envs/dev` | 개발 및 통합 검증 환경 |
+| `envs/prod` | 운영 환경 |
+| `platform-addons` | ArgoCD Bootstrap 및 Kubernetes Provider 기반 리소스 |
+
+---
+
+## 4. Environment
+
+### dev
+
+개발 및 통합 검증을 위한 비용 효율 중심 환경입니다.
+
+- 빠른 검증과 비용 절감 우선
+- prod와 동일한 서비스 흐름 유지
+- RDS, Redis, SQS, ECR, Secrets Manager, EKS 구성
+
+### prod
+
+운영 환경 기준으로 구성됩니다.
+
+- 고가용성 및 안정성 우선
+- EKS Private Endpoint 사용
+- Bastion/SSM 기반 클러스터 접근
+
+---
+
+## 5. Infrastructure Components
+
+### Network
+
+VPC는 Public, Private, Database Subnet으로 분리합니다.
+
+**Public Subnet**
+
+- ALB
+- NAT Gateway
+- Bastion
+
+**Private Subnet**
+
+- EKS Worker Node
+
+**Database Subnet**
+
+- RDS
+- Redis
+
+dev는 Single NAT를, prod는 Multi NAT를 사용합니다.
+
+---
+
+### Compute
+
+애플리케이션은 EKS에서 실행됩니다.
+
+- EKS Node Group 구성
+- Kubernetes Add-on 및 Application Manifest는 ArgoCD 관리
+- prod는 Private Endpoint 사용
+
+---
+
+### Database
+
+RDS MySQL은 최종 예매 데이터의 정합성을 담당합니다.
+
+- RDS Proxy를 통한 Connection 관리
+- prod Multi-AZ
+- prod Read Replica
+- Terraform Random Password 생성
+- Secrets Manager 연동
+
+---
+
+### Cache
+
+Redis는 티켓팅 서비스의 동시성 제어에 사용됩니다.
+
+주요 사용처
+
+- 대기열
+- Queue Token
+- 좌석 임시 선점
+- Redisson 기반 분산 락
+
+prod에서는 Redis Replication Group을 사용합니다.
+
+---
+
+### Messaging
+
+SQS는 예매 확정 요청을 비동기로 처리하기 위한 메시징 계층입니다.
+
+처리 흐름
+
+```text
+Web API
+    ↓
+SQS
+    ↓
+Worker Pod
+    ↓
+RDS
 ```
 
 ---
 
-## 🛠️ 담당자 및 역할 분담 (IaC & Network Master)
+### Security & Secrets
 
-* **담당 영역**: [modules/network](file:///C:/CE/team5/team5-ticket-infra/modules/network) 및 [modules/bastion](file:///C:/CE/team5/team5-ticket-infra/modules/bastion)
-* **담당 핵심 업무**:
-  1. **VPC 및 3-Tier 서브넷 설계**: 가용 영역 3개 분할 및 Public / Private / Database 망 논리적 격리
-  2. **비용 효율적 NAT 설계**: Dev 환경 Single NAT, Prod 환경 Multi-AZ NAT 자동 전환 제어
-  3. **SSM Bastion 보안 강화**: SSH Port 22 차단, SSM Session Manager 연동, IMDSv2 메타데이터 보안 강화
-  4. **State 백엔드 부트스트랩**: S3 State 및 DynamoDB Lock Backend 초기 구성 관리 ([bootstrap-backend](file:///C:/CE/team5/team5-ticket-infra/bootstrap-backend))
+애플리케이션 런타임 설정은 AWS Secrets Manager에 저장합니다.
+
+- External Secrets Operator를 통한 Kubernetes Secret 동기화
+- GitHub OIDC 기반 IAM Role Assume 방식 사용
+- AWS Access Key 미사용
 
 ---
 
-## 🚀 배포 가이드 (Deployment Guide)
+### Observability & Autoscaling
 
-### Step 1. S3 State 백엔드 초기화 (최초 1회)
-Terraform 상태 파일(`.tfstate`) 공유를 위해 S3 및 DynamoDB 락 테이블을 생성합니다.
-```bash
-cd bootstrap-backend
+지원 구성
+
+- Prometheus
+- Grafana
+- KEDA
+- Cluster Autoscaler
+- YACE
+- CloudWatch
+- WAF Logging
+
+Terraform은 IAM/IRSA를 관리하며, 실제 Add-on 설치는 Config Repository와 ArgoCD가 담당합니다.
+
+---
+
+## 6. Deployment
+
+### Core Infra
+
+`envs/{env}/infra`
+
+생성 대상
+
+- VPC
+- EKS
+- Bastion
+- RDS
+- Redis
+- SQS
+- ECR
+- Secrets Manager
+- S3 / CloudFront
+- WAF / Route53
+- GitHub OIDC Role
+- Monitoring IRSA
+
+---
+
+### Platform Add-ons
+
+`envs/{env}/platform-addons`
+
+ArgoCD Bootstrap을 담당합니다.
+
+Repository 역할은 다음과 같습니다.
+
+```text
+infra repo
+    ↓
+AWS Infrastructure
+ArgoCD Bootstrap
+
+config repo
+    ↓
+Kubernetes Add-on
+Application Manifest
+
+app repo
+    ↓
+Application Source
+Docker Build
+ECR Push
+```
+
+Terraform과 ArgoCD의 관리 영역을 분리하여 동일 리소스를 중복 관리하지 않습니다.
+
+---
+
+## 7. CI/CD
+
+Workflow
+
+```text
+.github/workflows/terraform.yml
+```
+
+### Pull Request
+
+```text
+PR
+ ↓
+Changed Path Detection
+ ↓
+terraform fmt
+ ↓
 terraform init
-terraform apply
+ ↓
+terraform validate
+ ↓
+terraform plan
+ ↓
+PR Comment
 ```
 
-### Step 2. 개발 환경 인프라 배포 (dev/infra)
-공통 네트워크(VPC)를 시작으로 EKS, RDS, Redis 등의 핵심 리소스를 프로비저닝합니다.
-```bash
-cd ../envs/dev/infra
-terraform init
-terraform apply
+Plan 대상
+
+- `envs/dev/infra`
+- `envs/prod/infra`
+
+---
+
+### Main Merge
+
+```text
+dev infra
+    ↓
+Auto Apply
+
+prod infra
+    ↓
+GitHub Environment Approval
+    ↓
+Apply
 ```
 
 ---
 
-## 🛡️ 보안 하드닝 규칙 (Security Hardening Rules)
+### tfvars
 
-* **SSM-Only Access**: Bastion 호스트의 SSH 포트인 22번 포트는 보안 위협을 방어하기 위해 상시 차단되어 있습니다.
-* **IMDSv2 강제**: 모든 EC2 인스턴스는 최신의 세션 토큰 방식 메타데이터 서비스(IMDSv2)를 사용합니다.
-* **DB 접근 통제**: 데이터베이스 망(`Database Subnets`)은 외부 인터넷 연결이 존재하지 않으며, Private Subnet(EKS Nodes) 및 Bastion SG로부터의 통신만 수용합니다.
+GitHub Secrets
+
+```text
+DEV_TERRAFORM_TFVARS
+PROD_TERRAFORM_TFVARS
+```
+
+`terraform.tfvars`는 Git에 커밋하지 않습니다.
+
+---
+
+## 8. Operations
+
+운영 시 주요 확인 사항
+
+- Terraform Plan 변경 사항 확인
+- EKS Node Group 상태 확인
+- RDS / Redis / SQS / ECR / Secrets Manager Output 확인
+- External Secrets 동기화 확인
+- ArgoCD Application Sync 상태 확인
+- KEDA / Cluster Autoscaler / Prometheus Add-on 상태 확인
+
+prod는 Private Endpoint를 사용하므로 Bastion/SSM을 통한 접근을 전제로 합니다.
