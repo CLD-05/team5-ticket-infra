@@ -324,10 +324,15 @@ jobs:
         if: steps.should_run.outputs.run == 'true'
         run: terraform init -input=false
 
-      # dev 환경 자동 apply
+      # dev apply 직전 실행 계획 생성
+      - name: Terraform plan
+        if: steps.should_run.outputs.run == 'true'
+        run: terraform plan -input=false -no-color -out=tfplan
+
+      # 직전에 생성한 dev 실행 계획 적용
       - name: Terraform apply
         if: steps.should_run.outputs.run == 'true'
-        run: terraform apply -input=false -auto-approve
+        run: terraform apply -input=false -auto-approve tfplan
 
   # main merge 후 prod 환경 Terraform apply
   terraform-apply-prod:
@@ -407,7 +412,12 @@ jobs:
         if: steps.should_run.outputs.run == 'true'
         run: terraform init -input=false
 
-      # prod 환경 승인 후 apply
+      # prod apply 직전 실행 계획 생성
+      - name: Terraform plan
+        if: steps.should_run.outputs.run == 'true'
+        run: terraform plan -input=false -no-color -out=tfplan
+
+      # 직전에 생성한 prod 실행 계획 적용
       - name: Terraform apply
         if: steps.should_run.outputs.run == 'true'
-        run: terraform apply -input=false -auto-approve
+        run: terraform apply -input=false -auto-approve tfplan
