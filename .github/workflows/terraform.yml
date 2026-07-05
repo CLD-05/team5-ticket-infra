@@ -1,6 +1,21 @@
 name: Terraform CI/CD
 
 on:
+  # Actions 화면에서 수동 실행
+  workflow_dispatch:
+    inputs:
+      apply_target:
+        description: "수동 실행 시 apply 대상 선택"
+        required: true
+        default: "plan-only"
+        type: choice
+        options:
+          - plan-only
+          - dev
+          - prod
+          - all
+
+  # PR 생성/갱신 시 Terraform plan 검증
   pull_request:
     branches:
       - main
@@ -9,6 +24,7 @@ on:
       - "modules/**"
       - ".github/workflows/terraform.yml"
 
+  # main merge 후 변경 환경 apply 실행
   push:
     branches:
       - main
@@ -17,32 +33,33 @@ on:
       - "modules/**"
       - ".github/workflows/terraform.yml"
 
-  workflow_dispatch:
-
+# workflow 전체 공통 설정값
 env:
   AWS_REGION: ap-northeast-2
   AWS_ACCOUNT_ID: "194722398200"
   TERRAFORM_VERSION: "1.11.4"
 
+# GitHub OIDC 인증 및 PR plan 코멘트 권한
 permissions:
   contents: read
   id-token: write
   pull-requests: write
 
 jobs:
+  # 변경된 Terraform 영역 식별
   detect-changes:
     name: Detect Terraform Changes
     runs-on: ubuntu-latest
     outputs:
       dev_infra: ${{ steps.filter.outputs.dev_infra }}
-      dev_platform_addons: ${{ steps.filter.outputs.dev_platform_addons }}
       prod_infra: ${{ steps.filter.outputs.prod_infra }}
-      prod_platform_addons: ${{ steps.filter.outputs.prod_platform_addons }}
       modules: ${{ steps.filter.outputs.modules }}
+      workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # env별 infra 및 공통 modules 변경 여부 계산
       - name: Detect changed Terraform layers
         id: filter
         uses: dorny/paths-filter@v3
@@ -50,15 +67,14 @@ jobs:
           filters: |
             dev_infra:
               - 'envs/dev/infra/**'
-            dev_platform_addons:
-              - 'envs/dev/platform-addons/**'
             prod_infra:
               - 'envs/prod/infra/**'
-            prod_platform_addons:
-              - 'envs/prod/platform-addons/**'
             modules:
               - 'modules/**'
+            workflow:
+              - '.github/workflows/terraform.yml'
 
+  # PR 또는 수동 실행 시 Terraform plan 수행
   terraform-plan:
     name: Plan (${{ matrix.name }})
     runs-on: ubuntu-latest
@@ -72,18 +88,10 @@ jobs:
             environment: dev
             working_directory: envs/dev/infra
             changed_output: dev_infra
-          - name: dev/platform-addons
-            environment: dev
-            working_directory: envs/dev/platform-addons
-            changed_output: dev_platform_addons
           - name: prod/infra
             environment: prod
             working_directory: envs/prod/infra
             changed_output: prod_infra
-          - name: prod/platform-addons
-            environment: prod
-            working_directory: envs/prod/platform-addons
-            changed_output: prod_platform_addons
     defaults:
       run:
         working-directory: ${{ matrix.working_directory }}
@@ -91,18 +99,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 현재 matrix 대상이 실행 대상인지 판정
       - name: Check whether this layer should run
         id: should_run
         run: |
           layer_changed='${{ needs.detect-changes.outputs[matrix.changed_output] }}'
           modules_changed='${{ needs.detect-changes.outputs.modules }}'
+          workflow_changed='${{ needs.detect-changes.outputs.workflow }}'
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ] || [ "$workflow_changed" = "true" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # GitHub OIDC 기반 AWS Role Assume
       - name: Configure AWS credentials with OIDC
         if: steps.should_run.outputs.run == 'true'
         uses: aws-actions/configure-aws-credentials@v4
@@ -110,33 +121,59 @@ jobs:
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/team5-gha-${{ matrix.environment }}-role
           aws-region: ${{ env.AWS_REGION }}
 
+      # 지정 Terraform 버전 설치
       - name: Set up Terraform
         if: steps.should_run.outputs.run == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+      # GitHub Secret 기반 terraform.tfvars 생성
+      - name: Write terraform tfvars
+        if: steps.should_run.outputs.run == 'true' && endsWith(matrix.working_directory, '/infra')
+        env:
+          DEV_TERRAFORM_TFVARS: ${{ secrets.DEV_TERRAFORM_TFVARS }}
+          PROD_TERRAFORM_TFVARS: ${{ secrets.PROD_TERRAFORM_TFVARS }}
+        run: |
+          if [ "${{ matrix.environment }}" = "dev" ]; then
+            TFVARS_CONTENT="$DEV_TERRAFORM_TFVARS"
+          else
+            TFVARS_CONTENT="$PROD_TERRAFORM_TFVARS"
+          fi
+
+          if [ -z "$TFVARS_CONTENT" ]; then
+            echo "::error::${{ matrix.environment }} terraform tfvars secret is empty or missing."
+            exit 1
+          fi
+
+          printf '%s\n' "$TFVARS_CONTENT" > terraform.tfvars
+
+      # Terraform 파일 포맷 검증
       - name: Terraform fmt
         if: steps.should_run.outputs.run == 'true'
         id: fmt
         run: terraform fmt -check -recursive
 
+      # Terraform backend/provider 초기화
       - name: Terraform init
         if: steps.should_run.outputs.run == 'true'
         id: init
         run: terraform init -input=false
 
+      # Terraform 구성 유효성 검증
       - name: Terraform validate
         if: steps.should_run.outputs.run == 'true'
         id: validate
         run: terraform validate -no-color
 
+      # 실제 AWS 상태와 코드 차이 계산
       - name: Terraform plan
         if: steps.should_run.outputs.run == 'true'
         id: plan
         run: terraform plan -input=false -no-color -out=tfplan
         continue-on-error: true
 
+      # GitHub Actions Summary에 plan 요약 기록
       - name: Write plan summary
         if: steps.should_run.outputs.run == 'true'
         run: |
@@ -159,6 +196,7 @@ jobs:
             echo "\`\`\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # PR 화면에 Terraform plan 코멘트 작성
       - name: Comment plan on PR
         if: github.event_name == 'pull_request' && steps.should_run.outputs.run == 'true'
         uses: actions/github-script@v7
@@ -205,25 +243,27 @@ jobs:
               body
             });
 
+      # plan 실패 시 workflow 실패 처리
       - name: Fail when plan failed
         if: steps.should_run.outputs.run == 'true' && steps.plan.outcome == 'failure'
         run: exit 1
 
+  # main merge 후 dev 환경 Terraform apply
   terraform-apply-dev:
     name: Apply Dev (${{ matrix.name }})
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_target == 'dev' || github.event.inputs.apply_target == 'all'))
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: dev/infra
+            environment: dev
             working_directory: envs/dev/infra
             changed_output: dev_infra
-          - name: dev/platform-addons
-            working_directory: envs/dev/platform-addons
-            changed_output: dev_platform_addons
     defaults:
       run:
         working-directory: ${{ matrix.working_directory }}
@@ -231,18 +271,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # dev apply 대상 여부 판정
       - name: Check whether this layer should apply
         id: should_run
         run: |
           layer_changed='${{ needs.detect-changes.outputs[matrix.changed_output] }}'
           modules_changed='${{ needs.detect-changes.outputs.modules }}'
+          apply_target='${{ github.event.inputs.apply_target }}'
 
-          if [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "$apply_target" = "dev" ] || [ "$apply_target" = "all" ]; then
+              echo "run=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "run=false" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # dev 전용 GitHub OIDC Role Assume
       - name: Configure AWS credentials with OIDC
         if: steps.should_run.outputs.run == 'true'
         uses: aws-actions/configure-aws-credentials@v4
@@ -250,36 +299,54 @@ jobs:
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/team5-gha-dev-role
           aws-region: ${{ env.AWS_REGION }}
 
+      # 지정 Terraform 버전 설치
       - name: Set up Terraform
         if: steps.should_run.outputs.run == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+      # dev infra용 terraform.tfvars 생성
+      - name: Write terraform tfvars
+        if: steps.should_run.outputs.run == 'true' && endsWith(matrix.working_directory, '/infra')
+        env:
+          DEV_TERRAFORM_TFVARS: ${{ secrets.DEV_TERRAFORM_TFVARS }}
+        run: |
+          if [ -z "$DEV_TERRAFORM_TFVARS" ]; then
+            echo "::error::dev terraform tfvars secret is empty or missing."
+            exit 1
+          fi
+
+          printf '%s\n' "$DEV_TERRAFORM_TFVARS" > terraform.tfvars
+
+      # Terraform backend/provider 초기화
       - name: Terraform init
         if: steps.should_run.outputs.run == 'true'
         run: terraform init -input=false
 
+      # dev 환경 자동 apply
       - name: Terraform apply
         if: steps.should_run.outputs.run == 'true'
         run: terraform apply -input=false -auto-approve
 
+  # main merge 후 prod 환경 Terraform apply
   terraform-apply-prod:
     name: Apply Prod (${{ matrix.name }})
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_target == 'prod' || github.event.inputs.apply_target == 'all'))
+    # prod 환경 승인 게이트
     environment: prod
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: prod/infra
+            environment: prod
             working_directory: envs/prod/infra
             changed_output: prod_infra
-          - name: prod/platform-addons
-            working_directory: envs/prod/platform-addons
-            changed_output: prod_platform_addons
     defaults:
       run:
         working-directory: ${{ matrix.working_directory }}
@@ -287,18 +354,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # prod apply 대상 여부 판정
       - name: Check whether this layer should apply
         id: should_run
         run: |
           layer_changed='${{ needs.detect-changes.outputs[matrix.changed_output] }}'
           modules_changed='${{ needs.detect-changes.outputs.modules }}'
+          apply_target='${{ github.event.inputs.apply_target }}'
 
-          if [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "$apply_target" = "prod" ] || [ "$apply_target" = "all" ]; then
+              echo "run=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "run=false" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$layer_changed" = "true" ] || [ "$modules_changed" = "true" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # prod 전용 GitHub OIDC Role Assume
       - name: Configure AWS credentials with OIDC
         if: steps.should_run.outputs.run == 'true'
         uses: aws-actions/configure-aws-credentials@v4
@@ -306,16 +382,32 @@ jobs:
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/team5-gha-prod-role
           aws-region: ${{ env.AWS_REGION }}
 
+      # 지정 Terraform 버전 설치
       - name: Set up Terraform
         if: steps.should_run.outputs.run == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+      # prod infra용 terraform.tfvars 생성
+      - name: Write terraform tfvars
+        if: steps.should_run.outputs.run == 'true' && endsWith(matrix.working_directory, '/infra')
+        env:
+          PROD_TERRAFORM_TFVARS: ${{ secrets.PROD_TERRAFORM_TFVARS }}
+        run: |
+          if [ -z "$PROD_TERRAFORM_TFVARS" ]; then
+            echo "::error::prod terraform tfvars secret is empty or missing."
+            exit 1
+          fi
+
+          printf '%s\n' "$PROD_TERRAFORM_TFVARS" > terraform.tfvars
+
+      # Terraform backend/provider 초기화
       - name: Terraform init
         if: steps.should_run.outputs.run == 'true'
         run: terraform init -input=false
 
+      # prod 환경 승인 후 apply
       - name: Terraform apply
         if: steps.should_run.outputs.run == 'true'
         run: terraform apply -input=false -auto-approve

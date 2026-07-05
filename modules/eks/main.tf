@@ -11,6 +11,9 @@ module "eks" {
   cluster_version = "1.35"
 
   iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+  kms_key_administrators = [
+    "arn:aws:iam::194722398200:user/team5-ljh"
+  ]
 
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
@@ -200,4 +203,3 @@ resource "aws_security_group_rule" "eks_api_bastion" {
   source_security_group_id = var.bastion_sg_id
   description              = "Allow Bastion host to communicate with EKS API server"
 }
-
