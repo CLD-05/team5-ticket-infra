@@ -9,3 +9,6 @@ module "network" {
   database_subnet_cidrs = var.database_subnet_cidrs
   enable_multi_nat      = var.enable_multi_nat
 }
+
+
+

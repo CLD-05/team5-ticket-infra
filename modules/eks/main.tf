@@ -49,101 +49,106 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    app = {
-      name            = "team5-${var.environment}-eks-app-ng"
-      use_name_prefix = false
+    for k, v in {
+      app = {
+        name            = "team5-${var.environment}-eks-app-ng"
+        use_name_prefix = false
 
-      ami_type                   = "AL2023_x86_64_STANDARD"
-      instance_types             = var.node_instance_types
-      max_pods                   = 110
-      enable_bootstrap_user_data = true
+        ami_type       = "AL2023_x86_64_STANDARD"
+        instance_types = var.node_instance_types
+        max_pods                   = 110
+        enable_bootstrap_user_data = true
 
-      desired_size = var.node_desired_size
-      min_size     = var.node_min_size
-      max_size     = var.node_max_size
+        desired_size = var.node_desired_size
+        min_size     = var.node_min_size
+        max_size     = var.node_max_size
 
-      iam_role_name                 = "team5-${var.environment}-node-group"
-      iam_role_use_name_prefix      = false
-      iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+        # EKS 모듈이 노드그룹 IAM 역할을 직접 생성 및 관리하도록 설정 복구
+        iam_role_name                 = "team5-${var.environment}-node-group"
+        iam_role_use_name_prefix      = false
+        iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 
-      block_device_mappings = {
-        xvda = {
-          device_name = "/dev/xvda"
-          ebs = {
-            volume_size           = 50
-            volume_type           = "gp3"
-            delete_on_termination = true
+        block_device_mappings = {
+          xvda = {
+            device_name = "/dev/xvda"
+            ebs = {
+              volume_size           = 50
+              volume_type           = "gp3"
+              delete_on_termination = true
+            }
           }
         }
+
+        metadata_options = {
+          http_endpoint               = "enabled"
+          http_tokens                 = "required"
+          http_put_response_hop_limit = 2
+        }
+
+        labels = {
+          role = "app"
+        }
+
+        tags = {
+          Name        = "team5-${var.environment}-app-node-group"
+          Team        = "team5"
+          Environment = var.environment
+        }
       }
+      # runner node group은 prod 환경에서만 생성 (dev 환경은 불필요)
+      runner = var.environment == "prod" ? {
+        name            = "team5-${var.environment}-eks-runner-ng"
+        use_name_prefix = false
 
-      metadata_options = {
-        http_endpoint               = "enabled"
-        http_tokens                 = "required"
-        http_put_response_hop_limit = 2
-      }
+        ami_type       = "AL2023_x86_64_STANDARD"
+        instance_types = var.node_instance_types
+        max_pods                   = 110
+        enable_bootstrap_user_data = true
 
-      labels = {
-        role = "app"
-      }
+        # 평상시 비용을 위해 0대 운영 (부하 테스트 시에만 스케일 아웃)
+        desired_size = 0
+        min_size     = 0
+        max_size     = 10
 
-      tags = {
-        Name        = "team5-${var.environment}-node-group"
-        Team        = "team5"
-        Environment = var.environment
-      }
-    }
-    runner = {
-      name            = "team5-${var.environment}-eks-runner-ng"
-      use_name_prefix = false
+        create_iam_role = false
+        iam_role_arn    = "arn:aws:iam::194722398200:role/team5-${var.environment}-node-group"
 
-      ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = var.node_instance_types
-      max_pods                   = 110
-      enable_bootstrap_user_data = true
-
-      desired_size = 3
-      min_size     = 0
-      max_size     = 10
-
-      create_iam_role = false
-      iam_role_arn    = "arn:aws:iam::194722398200:role/team5-${var.environment}-node-group"
-
-      block_device_mappings = {
-        xvda = {
-          device_name = "/dev/xvda"
-          ebs = {
-            volume_size           = 50
-            volume_type           = "gp3"
-            delete_on_termination = true
+        block_device_mappings = {
+          xvda = {
+            device_name = "/dev/xvda"
+            ebs = {
+              volume_size           = 50
+              volume_type           = "gp3"
+              delete_on_termination = true
+            }
           }
         }
-      }
 
-      metadata_options = {
-        http_endpoint               = "enabled"
-        http_tokens                 = "required"
-        http_put_response_hop_limit = 2
-      }
-
-      labels = {
-        role = "runner"
-      }
-
-      taints = [
-        {
-          key    = "dedicated"
-          value  = "runner"
-          effect = "NO_SCHEDULE"
+        metadata_options = {
+          http_endpoint               = "enabled"
+          http_tokens                 = "required"
+          http_put_response_hop_limit = 2
         }
-      ]
 
-      tags = {
-        Name        = "team5-${var.environment}-runner-node-group"
-        Team        = "team5"
-        Environment = var.environment
-      }
-    }
+        labels = {
+          role = "runner"
+        }
+
+        taints = [
+          {
+            key    = "dedicated"
+            value  = "runner"
+            effect = "NO_SCHEDULE"
+          }
+        ]
+
+        tags = {
+          Name        = "team5-${var.environment}-runner-node-group"
+          Team        = "team5"
+          Environment = var.environment
+        }
+      } : null
+    } : k => v if v != null
   }
 
   tags = {

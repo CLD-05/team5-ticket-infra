@@ -53,3 +53,6 @@ refresh.ps1
 status*.json
 parameters.json
 aws-power.ps1
+
+# Infracost cache/pricing files
+.infracost/
