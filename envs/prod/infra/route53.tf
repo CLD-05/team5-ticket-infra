@@ -32,3 +32,5 @@
       evaluate_target_health = false
     }
   }
+
+  # Route 53 설정 완료 (활성 영역: Z01580172CZSVI4ZGPE76)
