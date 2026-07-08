@@ -1,5 +1,9 @@
 # Team5 Ticket Infrastructure
 
+* 📦 **App 레포** : [team5-ticket-app](https://github.com/CLD-05/team5-ticket-app)
+* ⚙️ **Config 레포** : [team5-ticket-config](https://github.com/CLD-05/team5-ticket-config)
+* 🛠️ **Infra 레포** : [team5-ticket-infra](https://github.com/CLD-05/team5-ticket-infra)
+
 ## 1. 개요
 
 이 저장소는 Team5 티켓팅 플랫폼의 AWS 인프라를 Terraform으로 관리하는 IaC 저장소입니다.
